@@ -38,5 +38,6 @@ Then go to http://localhost:8000.
 
 - **Products and prices** are samples. Edit the `PRODUCTS` list near the top of the `<script>` in `index.html` (name, base price, height in cm, layers, print time, fun fact).
 - **Colors** are in the `COLORS` list right below it. Size runs from 80% to 130% of each product's height, and the price scales from 0.8x to 1.5x the base price (see `curSize()`).
-- **Orders** are not sent anywhere yet. The order form shows a thank-you message only. To receive orders, connect the form to a service such as Formspree or a Google Form.
+- **Payments** use PayPal checkout (PayPal or debit/credit card, in CAD, pickup only, no shipping). The PayPal Client ID is the `PAYPAL_CLIENT_ID` line in `index.html`. Use a **Sandbox** Client ID for testing and swap in the **Live** Client ID from the account owner (a parent) to take real money. Only the Client ID goes in the site, never the Secret. If PayPal can't load, the page falls back to a simple order request form.
+- **After someone pays,** PayPal emails the account owner. The buyer's name and contact are in the payment's custom ID, and the color, size and engraved name are in the item description. Check that the amount paid matches the order before printing.
 - **Reviews** on GitHub Pages are saved only in the visitor's own browser session. Sharing reviews between all visitors needs a small backend (for example Firebase or Supabase).

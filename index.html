@@ -200,6 +200,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 .form input,.form textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%}
 .ok{background:var(--card);border:1px solid var(--orange);border-radius:14px;padding:14px;font-weight:600}
 .note{font-size:13px;color:var(--muted);margin:0}
+.paybox{background:#fff;border-radius:14px;padding:12px 12px 4px;min-height:60px}
+.payload{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin:0}
+#payerr:empty{display:none}
+#payerr{color:#ff9a7a}
+.policy{display:grid;gap:4px}
+.policy b{font-size:14px;margin-top:4px}
 .stars{display:flex;gap:6px}
 .stars button{border:0;background:none;padding:2px;font-size:34px;line-height:1;color:rgba(255,245,236,.18);transition:transform .15s,color .15s}
 .stars button.on{color:var(--orange);text-shadow:0 0 18px rgba(255,122,31,.55)}
@@ -371,10 +377,18 @@ button{font:inherit;color:inherit;cursor:pointer}
         <form class="form" id="form">
           <label for="f-name">Your name<input id="f-name" required autocomplete="name"></label>
           <label for="f-contact">Parent's email or phone<input id="f-contact" required></label>
-          <button class="cta" type="submit">Send order</button>
+          <div class="paybox" id="pp-buttons" hidden></div>
+          <p class="payload" id="payload">Loading secure checkout…</p>
+          <button class="cta" type="submit" id="send" hidden>Send order request</button>
+          <p class="note" id="payerr" role="alert"></p>
         </form>
         <div class="ok" id="sent" hidden></div>
-        <p class="note">This is a preview with sample prices. Ordering turns on when the shop opens.</p>
+        <div class="card policy">
+          <b>Pickup only</b>
+          <p class="note">No shipping. After you pay, we'll message the contact above to set up a pickup time.</p>
+          <b>Refunds</b>
+          <p class="note">Prints with a name engraved can't be refunded. If your print is broken when you get it, we'll reprint it for free.</p>
+        </div>
         <div class="card review" id="review" hidden>
           <div class="kick">Rate Laser Lab</div>
           <h3>How did we do?</h3>
@@ -806,7 +820,7 @@ function show(v){
   const ORD=['shop','print','design','order'],ci=ORD.indexOf(v);
   $$('.tabs a').forEach((a,k)=>{if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');a.classList.toggle('off',(a.dataset.v!=='shop'&&state.picked<0)||(a.dataset.v==='order'&&!state.cart.length));a.classList.toggle('done',state.picked>=0&&k<ci)});
   $$('.tabs .link').forEach((l,k)=>l.classList.toggle('lit',state.picked>=0&&k<ci));
-  $('#v-print').hidden=v!=='print';$('#v-design').hidden=v!=='design';$('#v-order').hidden=v!=='order';
+  $('#v-print').hidden=v!=='print';$('#v-design').hidden=v!=='design';$('#v-order').hidden=v!=='order';if(v==='order'){loadPayPal();renderPay()}
   const carouselMode=v==='shop'||(v==='order'&&state.picked<0);
   $('#shopui').hidden=$('#shop-top').hidden=v!=='shop';
   $('#hud-t').hidden=carouselMode;
@@ -865,9 +879,33 @@ function renderCart(){const it=state.cart[0],box=$('#summary');if(!box)return;if
   const rows=[['Print',it.name],['Color',it.color],['Size',it.size]];if(it.engr)rows.push(['Name engraved',it.engr]);if(it.forWho)rows.push(['For',it.forWho]);
   box.innerHTML=rows.map(r=>`<div class="row"><span>${r[0]}</span><b></b></div>`).join('')+`<div class="row"><span>Total</span><b class="tot">$${it.price}</b></div>`;
   box.querySelectorAll('.row b:not(.tot)').forEach((b,k)=>b.textContent=rows[k][1])}
+/* PayPal checkout. Uses the Client ID below; if PayPal can't load (for example in the Claude preview), the order request form is used instead. */
+const PAYPAL_CLIENT_ID='AcZbNJ_YQsMhEfDwivCnttojjcMxhWML8IiANCDVzcSHX0EMpK1GiO1dZ5OQuMUXQPilKRud5Km0CKMv';
+var ppState='idle';
+function loadPayPal(){if(ppState!=='idle')return;if(!PAYPAL_CLIENT_ID){ppState='failed';return}ppState='loading';
+  const sc=document.createElement('script');sc.src='https://www.paypal.com/sdk/js?client-id='+encodeURIComponent(PAYPAL_CLIENT_ID)+'&currency=CAD&intent=capture&components=buttons&disable-funding=paylater,venmo';
+  sc.onload=()=>{ppState=(window.paypal&&window.paypal.Buttons)?'ready':'failed';renderPay()};sc.onerror=()=>{ppState='failed';renderPay()};document.head.appendChild(sc);
+  setTimeout(()=>{if(ppState==='loading'){ppState='failed';renderPay()}},12000)}
+function renderPay(){const box=$('#pp-buttons'),send=$('#send'),ld=$('#payload');
+  if(ppState==='loading'){ld.hidden=false;return}
+  ld.hidden=true;
+  if(ppState==='ready'){send.hidden=true;box.hidden=false;if(box.dataset.done)return;box.dataset.done='1';
+    window.paypal.Buttons({style:{layout:'vertical',shape:'rect',color:'gold',label:'pay',height:48},
+      onClick:(d,a)=>{$('#payerr').textContent='';if(!state.cart.length||!$('#form').reportValidity())return a.reject();return a.resolve()},
+      createOrder:(d,a)=>{const it=state.cart[0],v=it.price.toFixed(2),nm=$('#f-name').value.trim(),ct=$('#f-contact').value.trim(),cad=x=>({currency_code:'CAD',value:x});
+        return a.order.create({intent:'CAPTURE',purchase_units:[{description:('Laser Lab: '+it.name).slice(0,127),custom_id:(nm+' | '+ct).slice(0,127),
+          amount:Object.assign(cad(v),{breakdown:{item_total:cad(v)}}),
+          items:[{name:it.name.slice(0,127),description:[it.color,it.size,it.engr?'Name: '+it.engr:''].filter(Boolean).join(' · ').slice(0,127),quantity:'1',unit_amount:cad(v),category:'PHYSICAL_GOODS'}]}],
+          application_context:{shipping_preference:'NO_SHIPPING',brand_name:'Laser Lab',user_action:'PAY_NOW'}})},
+      onApprove:(d,a)=>a.order.capture().then(r=>orderDone($('#f-name').value,'Paid! Your order number is '+r.id+'. We\'ll message you soon to set up a pickup time.')),
+      onCancel:()=>{$('#payerr').textContent='Payment cancelled. Nothing was charged.'},
+      onError:()=>{$('#payerr').textContent='The payment didn\'t go through and nothing was charged. Please try again.'}
+    }).render('#pp-buttons').catch(()=>{ppState='failed';renderPay()})}
+  else{box.hidden=true;send.hidden=false}}
+function orderDone(nm,msg){$('#form').hidden=true;const ok=$('#sent');ok.hidden=false;ok.textContent=`Thanks, ${nm}! ${msg}`;
+  $('#rv-name').value=nm.split(' ')[0]||'';$('#review').hidden=false;$('#review').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}
 $('#form').addEventListener('submit',e=>{e.preventDefault();if(!state.cart.length){toast('Pick a print first');return}
-  const nm=$('#f-name').value;$('#form').hidden=true;const ok=$('#sent');ok.hidden=false;ok.textContent=`Thanks, ${nm}! This is a preview, so nothing was sent yet. Ordering turns on when the shop opens.`;
-  $('#rv-name').value=nm.split(' ')[0]||'';$('#review').hidden=false;$('#review').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})});
+  orderDone($('#f-name').value,'This is a preview, so nothing was sent or charged. On the real site you pay with PayPal or a card here.')});
 
 /* Reviews */
 let stars=0,db=null,myId=null,reviews=[],local=[];
