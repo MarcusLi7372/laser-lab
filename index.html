@@ -348,14 +348,14 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="stage" id="stage">
       <canvas id="c" aria-label="3D view of Laser Lab prints"></canvas>
       <div class="shop-top" id="shop-top">
-        <div class="live"><span class="on"></span><b>Printer online</b><span class="x sep">·</span><span class="x">0.2 mm layers</span><span class="sep">·</span><span>8 colors</span><span class="x sep">·</span><span class="x">5 materials</span></div>
+        <div class="live"><span class="on"></span><b>Printer online</b><span class="x sep">·</span><span class="x">0.2 mm layers</span><span class="sep">·</span><span>8 colors</span><span class="x sep">·</span><span class="x">Free name engraving</span></div>
         <h1><span>Swipe.</span> <span><em>Tap.</em></span> <span>Print.</span></h1>
       </div>
       <button class="edge l" id="prev" aria-label="Previous print"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button class="edge r" id="next" aria-label="Next print"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       <div class="tapcue" id="tapcue"><span class="ping"></span>Tap the print to start</div>
       <div class="shopui" id="shopui">
-        <div class="idx"><b id="s-idx">01</b> / 05</div>
+        <div class="idx"><b id="s-idx">01</b> / <span id="s-count">04</span></div>
         <div class="pname" id="s-name">Bolt Keychain</div>
         <div class="pmeta"><span class="pill cost" id="s-price">$4 – $12</span><span class="pill" id="s-size">4.4 – 7.2 cm tall</span><span class="pill rate" id="s-rate" hidden></span></div>
         <div class="dots" id="dots" role="group" aria-label="Choose a print"></div>
@@ -464,8 +464,7 @@ const PRODUCTS=[
  {id:'bolt',name:'Bolt Keychain',price:5,color:'#FF7A1F',layers:40,time:'20 min',h:5.5,fact:'Keychains print flat on the bed so they come out strong.'},
  {id:'cup',name:'Hex Pencil Cup',price:10,color:'#E8321E',layers:180,time:'2 h 10 min',h:9,fact:'The walls are printed with lines only 0.4 mm wide.'},
  {id:'rocket',name:'Desk Rocket',price:12,color:'#F4F1EC',layers:230,time:'2 h 45 min',h:11,fact:'The fins are printed at an angle, so no supports are needed.'},
- {id:'vase',name:'Twist Vase',price:15,color:'#FFB21F',layers:260,time:'3 h 30 min',h:12,fact:'Vases print in one long spiral line with no stops.'},
- {id:'planet',name:'Planet Night Light',price:20,color:'#3A3A44',layers:300,time:'4 h 15 min',h:12,fact:'Glow plastic soaks up light and shines in the dark.'}
+ {id:'vase',name:'Twist Vase',price:15,color:'#FFB21F',layers:260,time:'3 h 30 min',h:12,fact:'Vases print in one long spiral line with no stops.'}
 ];
 const COLORS=[['Laser Orange','#FF7A1F'],['Lightning Red','#E8321E'],['Spark Yellow','#FFB21F'],['Snow White','#F4F1EC'],['Charcoal','#3A3A44'],['Electric Blue','#2F6BFF'],['Mint','#3DDC97'],['Hot Pink','#FF3D8B']];
 const MATS=[{id:'pla',n:'PLA',add:0}];
@@ -555,12 +554,7 @@ const BUILD={
     for(let i=N;i>=2;i--){const y=i/N*2.25;pts.push([.46+.22*Math.sin(y*1.7+.5),y])}pts.push([0,2.25/N*2]);
     const geo=lathe(pts,140);const p=geo.attributes.position;const v=new THREE.Vector3();
     for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const r=Math.hypot(v.x,v.z);if(r<1e-4)continue;let a=Math.atan2(v.z,v.x);const r2=r*(1+.075*Math.cos(10*a));a+=v.y*.95;p.setXYZ(i,Math.cos(a)*r2,v.y,Math.sin(a)*r2)}
-    geo.computeVertexNormals();const g=new THREE.Group();g.add(mesh(geo,m));return g},
-  planet(m){const g=new THREE.Group();g.add(mesh(lathe([[0,0],[.62,0],[.64,.06],[.5,.26],[0,.26]],48),m));
-    const st=mesh(new THREE.CylinderGeometry(.07,.09,.4,20),m);st.position.y=.45;g.add(st);const sp=mesh(new THREE.SphereGeometry(.72,48,32),m);sp.position.y=1.32;g.add(sp);
-    const ring=mesh(new THREE.TorusGeometry(1.08,.07,14,90),m);ring.scale.z=.55;ring.position.y=1.32;ring.rotation.set(Math.PI/2-.42,0,.2);g.add(ring);
-    const moon=mesh(new THREE.SphereGeometry(.12,20,16),m);moon.position.set(.95,2.15,.2);g.add(moon);
-    const arm=mesh(new THREE.CylinderGeometry(.02,.02,.5,8),m);arm.position.set(.72,1.92,.12);arm.rotation.z=.85;g.add(arm);return g}
+    geo.computeVertexNormals();const g=new THREE.Group();g.add(mesh(geo,m));return g}
 };
 function buildProduct(id,mat){const inner=BUILD[id](mat);const box=new THREE.Box3().setFromObject(inner);const c=box.getCenter(new THREE.Vector3());
   inner.position.set(-c.x,-box.min.y,-c.z);const wrap=new THREE.Group();wrap.add(inner);const sz=box.getSize(new THREE.Vector3());return {obj:wrap,height:sz.y,radius:Math.max(sz.x,sz.z)/2}}
@@ -723,9 +717,9 @@ function applyMaterial(){if(!hasGL||!cur)return;const old=curMat;curMat=makeMate
 
 /* Laser name engraving: a decal projected onto the print's own surface */
 var engr=null,laser=null,decal=null,decCv,decCtx,emCv,emCtx,decTex,emTex,decMat,_up=window.THREE?new THREE.Vector3(0,1,0):null;
-const ENG={bolt:{x:.03,y:.45,ang:0,rot:.98,w:1.0,h:.2},cup:{x:0,y:.95,ang:Math.PI/6,rot:0,w:.72,h:.3},rocket:{x:0,y:.78,ang:0,rot:0,w:.8,h:.22},vase:{x:0,y:1.15,ang:0,rot:0,w:.95,h:.28},planet:{x:0,y:.4,ang:0,rot:0,w:.85,h:.24}};
+const ENG={bolt:{x:.03,y:.45,ang:0,rot:.98,w:1.0,h:.2},cup:{x:0,y:.95,ang:Math.PI/6,rot:0,w:.72,h:.3},rocket:{x:0,y:.78,ang:0,rot:0,w:.8,h:.22},vase:{x:0,y:1.15,ang:0,rot:0,w:.95,h:.28}};
 function engTarget(){let t=null;cur.obj.traverse(o=>{if(!o.isMesh||o.userData.decal||t)return;
-  if(PRODUCTS[state.picked].id==='planet'){if(o.geometry.type==='SphereGeometry'&&o.geometry.parameters.radius>.5)t=o}else t=o});return t}
+  t=o});return t}
 function removeDecal(){if(decal){decal.parent&&decal.parent.remove(decal);decal.geometry.dispose();decal=null}}
 function ensureLaser(){if(laser)return;laser=new THREE.Group();
   const emit=new THREE.Mesh(new THREE.BoxGeometry(.3,.18,.3),new THREE.MeshStandardMaterial({color:0x15151a,roughness:.4,metalness:.6}));
@@ -874,7 +868,7 @@ function pickProduct(i){
 /* Shop UI */
 PRODUCTS.forEach((p,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',p.name);b.onclick=()=>go(state.sel+relOf(i));$('#dots').appendChild(b)});
 function renderShop(){const p=PRODUCTS[state.sel];const nm=$('#s-name');if(nm.textContent!==p.name){nm.textContent=p.name;nm.classList.remove('swap');void nm.offsetWidth;nm.classList.add('swap')}
-  $('#s-idx').textContent=String(state.sel+1).padStart(2,'0');const cm=v=>v.toFixed(1).replace('.0','');$('#s-price').textContent='$'+Math.round(p.price*.8)+' – $'+Math.round(p.price*1.5);
+  $('#s-idx').textContent=String(state.sel+1).padStart(2,'0');$('#s-count').textContent=String(PRODUCTS.length).padStart(2,'0');const cm=v=>v.toFixed(1).replace('.0','');$('#s-price').textContent='$'+Math.round(p.price*.8)+' – $'+Math.round(p.price*1.5);
   $('#s-size').textContent=cm(p.h*.8)+' – '+cm(p.h*1.3)+' cm tall';$$('#dots button').forEach((b,i)=>b.setAttribute('aria-current',i===state.sel))}
 $('#prev').onclick=()=>go(state.sel-1);$('#next').onclick=()=>go(state.sel+1);
 addEventListener('keydown',e=>{if(view!=='shop'||(e.target.matches&&e.target.matches('input,textarea,button'))||!$('#splash').hidden)return;if(e.key==='ArrowLeft')go(state.sel-1);if(e.key==='ArrowRight')go(state.sel+1);if(e.key==='Enter')hasGL?launch(state.sel):pickProduct(state.sel)});
