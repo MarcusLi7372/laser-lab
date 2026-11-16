@@ -52,7 +52,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tabs a.done{color:var(--ink)}
 .tabs a.done .n{background:rgba(255,122,31,.18);border-color:rgba(255,122,31,.5);color:var(--orange)}
 .tabs a.off{opacity:.35;pointer-events:none}
-.tabs .link{width:28px;height:2px;border-radius:2px;background:var(--line);position:relative;overflow:hidden}
+.bar-end{justify-self:end}
+.tabs .link{width:24px;height:2px;border-radius:2px;background:var(--line);position:relative;overflow:hidden}
 .tabs .link::after{content:"";position:absolute;inset:0;background:var(--hot);transform:scaleX(0);transform-origin:left;transition:transform .5s}
 .tabs .link.lit::after{transform:scaleX(1)}
 .cartbtn{justify-self:end;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:800;border:1px solid var(--line);background:var(--bg-2);border-radius:14px;padding:6px 8px 6px 12px;font-size:13px;transition:border-color .2s}
@@ -159,6 +160,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 .group-h{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
 .group-h b{font-weight:800}
 .group-h span{font-size:13px;color:var(--muted)}
+.group-h span b{color:var(--ink)}
+.sizer{display:grid;gap:4px}
+.sizer input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:40px;background:transparent;margin:0;cursor:pointer;--fill:40%}
+.sizer input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:10px;background:linear-gradient(90deg,var(--red),var(--orange) var(--fill),rgba(255,245,236,.14) var(--fill))}
+.sizer input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-10px;border-radius:50%;background:#FFF5EC;border:5px solid var(--orange);box-shadow:0 0 0 7px rgba(255,122,31,.18),0 4px 12px rgba(0,0,0,.4)}
+.sizer input[type=range]::-moz-range-track{height:10px;border-radius:10px;background:rgba(255,245,236,.14)}
+.sizer input[type=range]::-moz-range-progress{height:10px;border-radius:10px;background:linear-gradient(90deg,var(--red),var(--orange))}
+.sizer input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#FFF5EC;border:5px solid var(--orange)}
+.sizer .ends{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.summary{display:grid;gap:10px}
+.summary .row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.summary .row:last-child{border-bottom:0}
+.summary .row span{color:var(--muted)}
+.summary .row b{text-align:right}
+.summary .tot{font-family:var(--font-display);font-size:30px;font-weight:800}
 .swatches{display:flex;flex-wrap:wrap;gap:10px}
 .sw{width:38px;height:38px;border-radius:50%;border:3px solid var(--bg-2);box-shadow:0 0 0 1px var(--line);padding:0}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--orange)}
@@ -292,9 +308,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     <nav class="tabs" aria-label="Steps">
       <a href="#shop" data-v="shop"><span class="n">1</span>Shop</a><i class="link" aria-hidden="true"></i>
       <a href="#print" data-v="print" class="off"><span class="n">2</span>Print</a><i class="link" aria-hidden="true"></i>
-      <a href="#design" data-v="design" class="off"><span class="n">3</span>Design</a>
+      <a href="#design" data-v="design" class="off"><span class="n">3</span>Design</a><i class="link" aria-hidden="true"></i>
+      <a href="#order" data-v="order" class="off"><span class="n">4</span>Order</a>
     </nav>
-    <a class="cartbtn" href="#order" aria-label="Your order"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span class="ct"><span>Order</span><small id="ctotal">$0</small></span><b id="count">0</b></a>
+    <span class="bar-end" aria-hidden="true"></span>
   </header>
 
   <main class="main" id="main" data-view="shop">
@@ -340,23 +357,23 @@ button{font:inherit;color:inherit;cursor:pointer}
       </section>
       <section class="view" id="v-design" hidden>
         <div><div class="kick">Make it yours</div><h2 id="d-name">Bolt Keychain</h2></div>
-        <p class="sub">Drag the print to turn it. Pick a color, material and size.</p>
+        <p class="sub">Drag the print to turn it. Pick a color and a size.</p>
         <div><div class="group-h"><b>Color</b><span id="d-color">Laser Orange</span></div><div class="swatches" id="swatches" role="group" aria-label="Color"></div></div>
-        <div><div class="group-h"><b>Material</b><span id="d-mat">Matte PLA</span></div><div class="opts" id="mats" role="group" aria-label="Material"></div></div>
-        <div><div class="group-h"><b>Size</b><span id="d-dims">5.5 cm tall</span></div><div class="opts" id="sizes" role="group" aria-label="Size"></div></div>
-        <div class="buy"><div class="price"><span id="price">$5</span><small>Sample price</small></div><button class="cta" id="add">Add to order</button></div>
+        <div class="sizer"><div class="group-h"><b>Size</b><span><b class="mono" id="d-dims">5.5 cm tall</b> · <span id="d-sizename">Medium</span></span></div>
+          <input type="range" id="size" min="0.8" max="1.3" step="0.05" value="1" aria-label="Size">
+          <div class="ends"><span id="d-min">4.4 cm</span><span id="d-max">7.2 cm</span></div></div>
+        <div class="buy"><div class="price"><span id="price">$5</span><small>Sample price</small></div><button class="cta" id="add">Order this</button></div>
         <button class="cta ghost" id="back">Back to all prints</button>
       </section>
       <section class="view" id="v-order" hidden>
-        <div><div class="kick">Almost done</div><h2>Your order</h2></div>
-        <ul class="cart" id="cart"></ul>
-        <div class="total"><span>Total</span><span class="mono" id="total">$0</span></div>
+        <div><div class="kick">Last step</div><h2>Your order</h2></div>
+        <div class="card summary" id="summary"></div>
         <form class="form" id="form">
           <label for="f-name">Your name<input id="f-name" required autocomplete="name"></label>
           <label for="f-contact">Parent's email or phone<input id="f-contact" required></label>
-          <label for="f-note">Anything else?<textarea id="f-note" rows="3"></textarea></label>
-          <button class="cta" type="submit">Send order request</button>
+          <button class="cta" type="submit">Send order</button>
         </form>
+        <div class="ok" id="sent" hidden></div>
         <p class="note">This is a preview with sample prices. Ordering turns on when the shop opens.</p>
         <div class="card review" id="review" hidden>
           <div class="kick">Rate Laser Lab</div>
@@ -371,7 +388,7 @@ button{font:inherit;color:inherit;cursor:pointer}
           <div class="rv-head"><b>What customers say</b><span class="rv-avg" id="rv-avg"></span></div>
           <ul class="rv-list" id="rv-list"><li class="empty" style="display:block">No reviews yet. Order a print and be the first.</li></ul>
         </div>
-        <button class="cta ghost" id="more">Keep shopping</button>
+        <button class="cta ghost" id="more">Back to all prints</button>
       </section>
     </aside>
   </main>
@@ -413,12 +430,12 @@ const PRODUCTS=[
  {id:'planet',name:'Planet Night Light',price:20,color:'#3A3A44',layers:300,time:'4 h 15 min',h:12,fact:'Glow plastic soaks up light and shines in the dark.'}
 ];
 const COLORS=[['Laser Orange','#FF7A1F'],['Lightning Red','#E8321E'],['Spark Yellow','#FFB21F'],['Snow White','#F4F1EC'],['Charcoal','#3A3A44'],['Electric Blue','#2F6BFF'],['Mint','#3DDC97'],['Hot Pink','#FF3D8B']];
-const MATS=[{id:'pla',n:'Matte PLA',add:0,d:'Soft look'},{id:'silk',n:'Silk PLA',add:2,d:'Shiny like metal'},{id:'petg',n:'Clear PETG',add:2,d:'See-through'},{id:'glow',n:'Glow',add:3,d:'Glows in the dark'},{id:'carbon',n:'Carbon Fiber',add:4,d:'Dark and tough'}];
-const SIZES=[{id:'S',n:'Small',m:.8,pm:.8,d:'80%'},{id:'M',n:'Medium',m:1,pm:1,d:'Standard'},{id:'L',n:'Large',m:1.3,pm:1.5,d:'130%'}];
-const state={sel:0,picked:-1,color:'',mat:'pla',size:'M',cart:[],answers:{},qStep:0,printDone:false};
+const MATS=[{id:'pla',n:'PLA',add:0}];
+function curSize(){const m=state.scale;return {m,pm:.8+(m-.8)*1.4,n:m<.95?'Small':m<1.15?'Medium':'Large'}}
+const state={sel:0,picked:-1,color:'',mat:'pla',scale:1,cart:[],answers:{},qStep:0,printDone:false};
 const colorName=h=>(COLORS.find(c=>c[1]===h)||['Custom'])[0];
 const esc=s=>String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
-const priceOf=()=>{const p=PRODUCTS[state.picked],s=SIZES.find(x=>x.id===state.size),m=MATS.find(x=>x.id===state.mat);return Math.round(p.price*s.pm)+m.add};
+const priceOf=()=>{const p=PRODUCTS[state.picked];return Math.round(p.price*curSize().pm)};
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800)}
 
 /* Splash */
@@ -578,7 +595,7 @@ function isMobile(){return innerWidth<=860}
 function applyOffset(){if(!hasGL)return;const r=$('#stage').getBoundingClientRect();const f=isMobile()&&view!=='shop'&&!(view==='order'&&state.picked<0)?({peek:.33,mid:.5,big:.86}[sheetMode]||.5):0;
   if(f){camera.setViewOffset(r.width,r.height,0,r.height*Math.min(f,.6)*.5,r.width,r.height)}else camera.clearViewOffset();camera.updateProjectionMatrix()}
 function flyTo(p,t,d){camTween={from:camera.position.clone(),to:new THREE.Vector3(p[0],p[1],p[2]),tf:controls.target.clone(),tt:new THREE.Vector3(t[0],t[1],t[2]),s:performance.now(),d:reduce?1:(d||1200)}}
-function viewCam(){const s=SIZES.find(x=>x.id===state.size).m,k=isMobile()?.86:1;return [[(4.3*s+.6)*k,(3.1*s+.4)*k+.1,(5.3*s+.8)*k],[0,1.05*s,0]]}
+function viewCam(){const s=curSize().m,k=isMobile()?.86:1;return [[(4.3*s+.6)*k,(3.1*s+.4)*k+.1,(5.3*s+.8)*k],[0,1.05*s,0]]}
 function shopCam(){return camera.aspect<.8?[[0,1.1,10.5],[0,-.85,0]]:[[0,1.5,9.8],[0,.78,0]]}
 
 /* Swipe carousel */
@@ -631,7 +648,7 @@ function tick(now){
     if(!camTween&&!launching&&view==='shop'){const c=shopCam();camera.position.x+=((c[0][0]+parX*1.2)-camera.position.x)*.05;camera.position.y+=((c[0][1]-parY*.6)-camera.position.y)*.05}
   }
   if(cur){
-    const p=PRODUCTS[state.picked];const sMul=SIZES.find(x=>x.id===state.size).m;scaleNow+=(sMul-scaleNow)*.12;cur.obj.scale.setScalar(scaleNow);
+    const p=PRODUCTS[state.picked];const sMul=curSize().m;scaleNow+=(sMul-scaleNow)*.12;cur.obj.scale.setScalar(scaleNow);
     const H=cur.height*scaleNow,R=cur.radius*scaleNow;
     if(printing){
       const k=Math.min(1,(now-pStart)/pDur),heat=Math.min(1,k/.1),pk=Math.max(0,(k-.1)/.9),h=pk*H;clipPlane.constant=h;
@@ -774,7 +791,7 @@ function renderQ(){
         const save=()=>{const v=$('#qname').value.trim();if(!v)return;state.answers.name=v;startEngrave(v)};$('#qsave').onclick=save;$('#qname').onkeydown=e=>{if(e.key==='Enter')save()};$('#qname').focus();return}
       state.answers[Q.k]=o;state.qStep++;renderQ()};qc.appendChild(b)});
 }
-function renderFacts(){const p=PRODUCTS[state.picked],s=SIZES.find(x=>x.id===state.size);
+function renderFacts(){const p=PRODUCTS[state.picked],s=curSize();
   $('#facts').innerHTML=[['Layers',Math.round(p.layers*s.m)],['Real print time',p.time],['Height',(p.h*s.m).toFixed(1).replace('.0','')+' cm'],['Nozzle heat','210°C']]
     .map(([a,b])=>`<div class="fact"><span>${a}</span><b>${b}</b></div>`).join('');
   $('#tip').innerHTML=`<b>Did you know?</b> ${p.fact}`}
@@ -782,12 +799,13 @@ function renderFacts(){const p=PRODUCTS[state.picked],s=SIZES.find(x=>x.id===sta
 /* Views */
 function show(v){
   if((v==='print'||v==='design')&&state.picked<0)v='shop';
+  if(v==='order'&&!state.cart.length)v=state.picked>=0?'design':'shop';
   if(v==='design'&&engr&&!engr.done){v='print';toast('Wait for the laser to finish, or tap Skip')}
   if(!['shop','print','design','order'].includes(v))v='shop';
   view=v;$('#main').dataset.view=v;
-  const ORD=['shop','print','design'],ci=ORD.indexOf(v);
-  $$('.tabs a').forEach((a,k)=>{if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');a.classList.toggle('off',a.dataset.v!=='shop'&&state.picked<0);a.classList.toggle('done',state.picked>=0&&(ci<0?true:k<ci))});
-  $$('.tabs .link').forEach((l,k)=>l.classList.toggle('lit',state.picked>=0&&(ci<0||k<ci)));
+  const ORD=['shop','print','design','order'],ci=ORD.indexOf(v);
+  $$('.tabs a').forEach((a,k)=>{if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');a.classList.toggle('off',(a.dataset.v!=='shop'&&state.picked<0)||(a.dataset.v==='order'&&!state.cart.length));a.classList.toggle('done',state.picked>=0&&k<ci)});
+  $$('.tabs .link').forEach((l,k)=>l.classList.toggle('lit',state.picked>=0&&k<ci));
   $('#v-print').hidden=v!=='print';$('#v-design').hidden=v!=='design';$('#v-order').hidden=v!=='order';
   const carouselMode=v==='shop'||(v==='order'&&state.picked<0);
   $('#shopui').hidden=$('#shop-top').hidden=v!=='shop';
@@ -810,7 +828,7 @@ addEventListener('hashchange',()=>show(location.hash.slice(1)));
 function nav(v){if(location.hash==='#'+v)show(v);else location.hash=v}
 
 function pickProduct(i){
-  state.picked=i;state.color=PRODUCTS[i].color;state.mat='pla';state.size='M';state.answers={};state.qStep=0;scaleNow=1;
+  state.picked=i;state.color=PRODUCTS[i].color;state.mat='pla';state.scale=1;$('#size').value=1;state.answers={};state.qStep=0;scaleNow=1;
   placeProduct();renderQ();renderFacts();renderDesign();$('#p-name').textContent=PRODUCTS[i].name;$('#r-name').textContent=PRODUCTS[i].name;
   nav('print');startPrint();
 }
@@ -818,7 +836,7 @@ function pickProduct(i){
 /* Shop UI */
 PRODUCTS.forEach((p,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',p.name);b.onclick=()=>go(state.sel+relOf(i));$('#dots').appendChild(b)});
 function renderShop(){const p=PRODUCTS[state.sel];const nm=$('#s-name');if(nm.textContent!==p.name){nm.textContent=p.name;nm.classList.remove('swap');void nm.offsetWidth;nm.classList.add('swap')}
-  $('#s-idx').textContent=String(state.sel+1).padStart(2,'0');const cm=v=>v.toFixed(1).replace('.0','');$('#s-price').textContent='$'+Math.round(p.price*.8)+' – $'+(Math.round(p.price*1.5)+4);
+  $('#s-idx').textContent=String(state.sel+1).padStart(2,'0');const cm=v=>v.toFixed(1).replace('.0','');$('#s-price').textContent='$'+Math.round(p.price*.8)+' – $'+Math.round(p.price*1.5);
   $('#s-size').textContent=cm(p.h*.8)+' – '+cm(p.h*1.3)+' cm tall';$$('#dots button').forEach((b,i)=>b.setAttribute('aria-current',i===state.sel))}
 $('#prev').onclick=()=>go(state.sel-1);$('#next').onclick=()=>go(state.sel+1);
 addEventListener('keydown',e=>{if(view!=='shop'||e.target.matches('input,textarea,button')||!$('#splash').hidden)return;if(e.key==='ArrowLeft')go(state.sel-1);if(e.key==='ArrowRight')go(state.sel+1);if(e.key==='Enter')hasGL?launch(state.sel):pickProduct(state.sel)});
@@ -827,32 +845,28 @@ if(!hasGL){$('#tapcue').innerHTML='<button class="cta" style="pointer-events:aut
 /* Design UI */
 COLORS.forEach(([n,h])=>{const b=document.createElement('button');b.className='sw';b.style.background=h;b.title=n;b.setAttribute('aria-label',n);b.dataset.h=h;
   b.onclick=()=>{state.color=h;applyMaterial();renderDesign()};$('#swatches').appendChild(b)});
-MATS.forEach(m=>{const b=document.createElement('button');b.className='opt';b.dataset.id=m.id;b.innerHTML=`${m.n}<small>${m.d}${m.add?' · +$'+m.add:''}</small>`;
-  b.onclick=()=>{state.mat=m.id;applyMaterial();renderDesign()};$('#mats').appendChild(b)});
-SIZES.forEach(s=>{const b=document.createElement('button');b.className='opt';b.dataset.id=s.id;b.innerHTML=`${s.n}<small>${s.d}</small>`;
-  b.onclick=()=>{state.size=s.id;renderDesign();renderFacts();if(hasGL&&!printing&&!userTouched){const c=viewCam();flyTo(c[0],c[1])}};$('#sizes').appendChild(b)});
-function renderDesign(){if(state.picked<0)return;const p=PRODUCTS[state.picked],s=SIZES.find(x=>x.id===state.size),m=MATS.find(x=>x.id===state.mat);
+$('#size').addEventListener('input',e=>{state.scale=+e.target.value;renderDesign();renderFacts()});
+$('#size').addEventListener('change',()=>{if(hasGL&&!printing&&!userTouched){const c=viewCam();flyTo(c[0],c[1],700)}});
+function renderDesign(){if(state.picked<0)return;const p=PRODUCTS[state.picked],z=curSize(),cm=v=>v.toFixed(1).replace('.0','');
   $$('#swatches .sw').forEach(b=>b.setAttribute('aria-pressed',b.dataset.h===state.color));
-  $$('#mats .opt').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===state.mat));
-  $$('#sizes .opt').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===state.size));
-  $('#d-name').textContent=p.name;$('#d-color').textContent=colorName(state.color);$('#d-mat').textContent=m.n;
-  $('#d-dims').textContent=(p.h*s.m).toFixed(1).replace('.0','')+' cm tall';$('#price').textContent='$'+priceOf()}
+  const sl=$('#size');sl.style.setProperty('--fill',((state.scale-.8)/.5*100)+'%');
+  $('#d-name').textContent=p.name;$('#d-color').textContent=colorName(state.color);
+  $('#d-dims').textContent=cm(p.h*z.m)+' cm tall';$('#d-sizename').textContent=z.n;$('#d-min').textContent=cm(p.h*.8)+' cm';$('#d-max').textContent=cm(p.h*1.3)+' cm';
+  $('#price').textContent='$'+priceOf();$('#add').textContent='Order this · $'+priceOf()}
 $('#to-design').onclick=()=>{if(printing)finishPrint();nav('design')};
 $('#back').onclick=()=>{go(state.sel+relOf(state.picked));nav('shop')};
 $('#more').onclick=()=>nav('shop');
-$('#add').onclick=()=>{const p=PRODUCTS[state.picked],a=state.answers;
-  state.cart.push({name:p.name,detail:[colorName(state.color),MATS.find(m=>m.id===state.mat).n,SIZES.find(s=>s.id===state.size).n,a.for?'For: '+a.for:'',a.name?'Name: '+a.name:''].filter(Boolean).join(' · '),price:priceOf()});
-  renderCart();toast('Added '+p.name);nav('order')};
+$('#add').onclick=()=>{const p=PRODUCTS[state.picked],a=state.answers,z=curSize();
+  state.cart=[{name:p.name,color:colorName(state.color),size:(p.h*z.m).toFixed(1).replace('.0','')+' cm tall ('+z.n+')',forWho:a.for||'',engr:a.name||'',price:priceOf()}];
+  $('#form').hidden=false;$('#sent').hidden=true;renderCart();nav('order')};
 
 /* Order */
-function renderCart(){const c=$('#cart');const cb=$('#count');if(cb.textContent!==String(state.cart.length)){cb.textContent=state.cart.length;cb.classList.remove('bump');void cb.offsetWidth;cb.classList.add('bump')}
-  $('#ctotal').textContent='$'+state.cart.reduce((a,b)=>a+b.price,0);
-  c.innerHTML=state.cart.length?'':'<li class="empty" style="display:block">No prints yet. Pick one from the shop.</li>';
-  state.cart.forEach((it,i)=>{const li=document.createElement('li');li.innerHTML=`<div><b>${esc(it.name)}</b><span>${esc(it.detail)}</span></div><div style="display:flex;align-items:center;gap:6px"><b class="mono">$${it.price}</b><button class="x" aria-label="Remove ${esc(it.name)}">Remove</button></div>`;
-    li.querySelector('.x').onclick=()=>{state.cart.splice(i,1);renderCart()};c.appendChild(li)});
-  $('#total').textContent='$'+state.cart.reduce((a,b)=>a+b.price,0)}
-$('#form').addEventListener('submit',e=>{e.preventDefault();if(!state.cart.length){toast('Add a print first');return}
-  const nm=$('#f-name').value;$('#form').outerHTML=`<div class="ok">Thanks, ${esc(nm)}! This is a preview, so nothing was sent yet. Ordering turns on when the shop opens.</div>`;
+function renderCart(){const it=state.cart[0],box=$('#summary');if(!box)return;if(!it){box.innerHTML='';return}
+  const rows=[['Print',it.name],['Color',it.color],['Size',it.size]];if(it.engr)rows.push(['Name engraved',it.engr]);if(it.forWho)rows.push(['For',it.forWho]);
+  box.innerHTML=rows.map(r=>`<div class="row"><span>${r[0]}</span><b></b></div>`).join('')+`<div class="row"><span>Total</span><b class="tot">$${it.price}</b></div>`;
+  box.querySelectorAll('.row b:not(.tot)').forEach((b,k)=>b.textContent=rows[k][1])}
+$('#form').addEventListener('submit',e=>{e.preventDefault();if(!state.cart.length){toast('Pick a print first');return}
+  const nm=$('#f-name').value;$('#form').hidden=true;const ok=$('#sent');ok.hidden=false;ok.textContent=`Thanks, ${nm}! This is a preview, so nothing was sent yet. Ordering turns on when the shop opens.`;
   $('#rv-name').value=nm.split(' ')[0]||'';$('#review').hidden=false;$('#review').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})});
 
 /* Reviews */

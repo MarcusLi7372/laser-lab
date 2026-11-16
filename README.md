@@ -2,7 +2,7 @@
 
 Website for **Laser Lab**, a custom 3D printing shop.
 
-Customers swipe through 3D prints, tap one to watch a 3D printer build it, answer a few quick questions (who it's for, color, a name to laser-engrave), then customize the color, material and size before ordering.
+Customers swipe through 3D prints, tap one to watch a 3D printer build it, answer a few quick questions (who it's for, color, a name to laser-engrave onto the print), then pick a color and drag a slider to choose the size before ordering.
 
 ## What's in this folder
 
@@ -37,6 +37,6 @@ Then go to http://localhost:8000.
 ## Things to update before launch
 
 - **Products and prices** are samples. Edit the `PRODUCTS` list near the top of the `<script>` in `index.html` (name, base price, height in cm, layers, print time, fun fact).
-- **Colors, materials and sizes** are in the `COLORS`, `MATS` and `SIZES` lists right below it.
+- **Colors** are in the `COLORS` list right below it. Size runs from 80% to 130% of each product's height, and the price scales from 0.8x to 1.5x the base price (see `curSize()`).
 - **Orders** are not sent anywhere yet. The order form shows a thank-you message only. To receive orders, connect the form to a service such as Formspree or a Google Form.
 - **Reviews** on GitHub Pages are saved only in the visitor's own browser session. Sharing reviews between all visitors needs a small backend (for example Firebase or Supabase).
