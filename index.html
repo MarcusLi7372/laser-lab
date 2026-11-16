@@ -853,7 +853,7 @@ function renderShop(){const p=PRODUCTS[state.sel];const nm=$('#s-name');if(nm.te
   $('#s-idx').textContent=String(state.sel+1).padStart(2,'0');const cm=v=>v.toFixed(1).replace('.0','');$('#s-price').textContent='$'+Math.round(p.price*.8)+' – $'+Math.round(p.price*1.5);
   $('#s-size').textContent=cm(p.h*.8)+' – '+cm(p.h*1.3)+' cm tall';$$('#dots button').forEach((b,i)=>b.setAttribute('aria-current',i===state.sel))}
 $('#prev').onclick=()=>go(state.sel-1);$('#next').onclick=()=>go(state.sel+1);
-addEventListener('keydown',e=>{if(view!=='shop'||e.target.matches('input,textarea,button')||!$('#splash').hidden)return;if(e.key==='ArrowLeft')go(state.sel-1);if(e.key==='ArrowRight')go(state.sel+1);if(e.key==='Enter')hasGL?launch(state.sel):pickProduct(state.sel)});
+addEventListener('keydown',e=>{if(view!=='shop'||(e.target.matches&&e.target.matches('input,textarea,button'))||!$('#splash').hidden)return;if(e.key==='ArrowLeft')go(state.sel-1);if(e.key==='ArrowRight')go(state.sel+1);if(e.key==='Enter')hasGL?launch(state.sel):pickProduct(state.sel)});
 if(!hasGL){$('#tapcue').innerHTML='<button class="cta" style="pointer-events:auto;width:auto" id="nogo">Start printing</button>';$('#nogo').onclick=()=>pickProduct(state.sel)}
 
 /* Design UI */
