@@ -24,6 +24,40 @@ The 3D graphics use [three.js](https://threejs.org) r128, loaded from a CDN, so 
 
 To use your own domain (like `laserlab.ca`), add it under **Settings → Pages → Custom domain**.
 
+## Receipts and pickup
+
+After a payment, the site shows a receipt for 10 seconds (order number, print, color, size, engraved name, total and the pickup address) and emails the same receipt to the customer.
+
+The pickup address is the `PICKUP_ADDRESS` line in `index.html`.
+
+### Turning on receipt emails (EmailJS, free plan)
+
+1. Sign up at [emailjs.com](https://www.emailjs.com) and add an **Email Service** (for example, connect the Laser Lab Gmail).
+2. Create an **Email Template**:
+   - **To email:** `{{to_email}}`
+   - **Bcc:** the parent's email, so they get a copy of every order
+   - **Subject:** `Your Laser Lab order #{{order_id}}`
+   - **Body:**
+     ```
+     Hi {{customer_name}}, thanks for your order!
+
+     Order number: #{{order_id}}
+     Print: {{item}}
+     Color: {{color}}
+     Size: {{size}}
+     Name engraved: {{engraving}}
+     Total: {{total}} ({{status}})
+
+     Pickup address: {{pickup_address}}
+     {{pickup_note}}
+
+     Laser Lab
+     ```
+3. Copy the **Public Key** (Account page), **Service ID** and **Template ID** into the `EMAILJS` line in `index.html`. These three values are meant to be public.
+4. In EmailJS **Security**, limit requests to your website's domain.
+
+If the `EMAILJS` values are blank, no email is sent and customers still get PayPal's own payment receipt.
+
 ## Try it on your computer
 
 Open `index.html` in a browser, or run a small local server from this folder:

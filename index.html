@@ -205,6 +205,30 @@ button{font:inherit;color:inherit;cursor:pointer}
 #payerr:empty{display:none}
 #payerr{color:#ff9a7a}
 .policy{display:grid;gap:4px}
+.rcpt{position:fixed;inset:0;z-index:45;display:grid;place-items:center;background:rgba(5,5,7,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:20px max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px));animation:rin .35s cubic-bezier(.2,.9,.2,1.1)}
+.rcpt.out{opacity:0;transition:opacity .3s}
+@keyframes rin{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.mail{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#FFFDFB;color:#1b1b20;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.mail-top{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #ece6e1;background:#f5f1ed;border-radius:20px 20px 0 0}
+.mail-top img{height:40px;width:auto;flex:0 0 auto;background:#111114;border-radius:10px;padding:3px 5px}
+.mail-meta{font-size:12px;color:#6b6460;line-height:1.45;min-width:0}
+.mail-meta div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mail-meta b{color:#1b1b20;font-size:14px}
+.timer{margin-left:auto;position:relative;width:46px;height:46px;flex:0 0 auto;display:grid;place-items:center}
+.timer svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:4}
+.t-bg{stroke:#e6ded8}.t-fg{stroke:#FF7A1F;stroke-linecap:round}
+.timer b{font-family:var(--font-mono);font-size:15px;color:#1b1b20}
+.mail-body{padding:20px 22px 22px;display:grid;gap:12px}
+.mail-body h3{font-family:var(--font-display);font-size:21px;font-weight:800;color:#1b1b20}
+.mail-body p{margin:0;font-size:14px;color:#4a4542}
+.mail-rows .row{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid #eee7e2;font-size:14px}
+.mail-rows .row span{color:#7a726d}.mail-rows .row b{text-align:right;color:#1b1b20;overflow-wrap:anywhere}
+.pickup{background:#fff2e8;border:1px solid #ffd2b3;border-radius:14px;padding:14px;display:grid;gap:4px}
+.pickup b{color:#9a3412}.pickup .m-addr{font-weight:700;color:#1b1b20;font-size:15px}
+.pickup a{color:#c2410c;font-weight:700;font-size:13px}
+.mail-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#7a726d;font-family:var(--font-mono)}
+.mail-foot button{border:0;background:#1b1b20;color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-family:var(--font-body)}
 .policy b{font-size:14px;margin-top:4px}
 .stars{display:flex;gap:6px}
 .stars button{border:0;background:none;padding:2px;font-size:34px;line-height:1;color:rgba(255,245,236,.18);transition:transform .15s,color .15s}
@@ -376,7 +400,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         <div class="card summary" id="summary"></div>
         <form class="form" id="form">
           <label for="f-name">Your name<input id="f-name" required autocomplete="name"></label>
-          <label for="f-contact">Parent's email or phone<input id="f-contact" required></label>
+          <label for="f-contact">Parent's email (your receipt goes here)<input id="f-contact" type="email" required autocomplete="email"></label>
           <div class="paybox" id="pp-buttons" hidden></div>
           <p class="payload" id="payload">Loading secure checkout…</p>
           <button class="cta" type="submit" id="send" hidden>Send order request</button>
@@ -385,7 +409,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         <div class="ok" id="sent" hidden></div>
         <div class="card policy">
           <b>Pickup only</b>
-          <p class="note">No shipping. After you pay, we'll message the contact above to set up a pickup time.</p>
+          <p class="note">No shipping. Pickup is in Richmond Hill. After you pay, your receipt shows the full pickup address and we'll email you to set up a time.</p>
           <b>Refunds</b>
           <p class="note">Prints with a name engraved can't be refunded. If your print is broken when you get it, we'll reprint it for free.</p>
         </div>
@@ -897,15 +921,51 @@ function renderPay(){const box=$('#pp-buttons'),send=$('#send'),ld=$('#payload')
           amount:Object.assign(cad(v),{breakdown:{item_total:cad(v)}}),
           items:[{name:it.name.slice(0,127),description:[it.color,it.size,it.engr?'Name: '+it.engr:''].filter(Boolean).join(' · ').slice(0,127),quantity:'1',unit_amount:cad(v),category:'PHYSICAL_GOODS'}]}],
           application_context:{shipping_preference:'NO_SHIPPING',brand_name:'Laser Lab',user_action:'PAY_NOW'}})},
-      onApprove:(d,a)=>a.order.capture().then(r=>orderDone($('#f-name').value,'Paid! Your order number is '+r.id+'. We\'ll message you soon to set up a pickup time.')),
+      onApprove:(d,a)=>a.order.capture().then(r=>orderDone(r.id,true)),
       onCancel:()=>{$('#payerr').textContent='Payment cancelled. Nothing was charged.'},
       onError:()=>{$('#payerr').textContent='The payment didn\'t go through and nothing was charged. Please try again.'}
     }).render('#pp-buttons').catch(()=>{ppState='failed';renderPay()})}
   else{box.hidden=true;send.hidden=false}}
-function orderDone(nm,msg){$('#form').hidden=true;const ok=$('#sent');ok.hidden=false;ok.textContent=`Thanks, ${nm}! ${msg}`;
-  $('#rv-name').value=nm.split(' ')[0]||'';$('#review').hidden=false;$('#review').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}
+/* Receipt: shown on screen for 10 seconds and emailed to the customer */
+const PICKUP_ADDRESS='23 Solar Street, Richmond Hill, ON, Canada';
+/* EmailJS (emailjs.com, free plan): fill these three in to email receipts. Leave blank to skip email. */
+const EMAILJS={publicKey:'',serviceId:'',templateId:''};
+function orderInfo(id,paid){const it=state.cart[0];return {order_id:id,customer_name:$('#f-name').value.trim(),to_email:$('#f-contact').value.trim(),item:it.name,color:it.color,size:it.size,
+  engraving:it.engr||'None',total:'$'+it.price.toFixed(2)+' CAD',status:paid?'Paid':'Preview (not paid)',pickup_address:PICKUP_ADDRESS,pickup_note:"We'll email you to set up a pickup time."}}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+async function sendReceipt(o){if(!EMAILJS.publicKey||!EMAILJS.serviceId||!EMAILJS.templateId)return 'off';
+  try{if(!window.emailjs)await loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js');await window.emailjs.send(EMAILJS.serviceId,EMAILJS.templateId,o,{publicKey:EMAILJS.publicKey});return 'sent'}catch(e){return 'failed'}}
+function showReceipt(o,paid){
+  const SECS=10,ov=document.createElement('div');ov.className='rcpt';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Your receipt');
+  ov.innerHTML=`<div class="mail"><div class="mail-top"><img alt="" src="${$('#slogo').src}"><div class="mail-meta"><div><b>Laser Lab</b></div><div class="m-to"></div><div class="m-sub"></div></div>
+    <div class="timer" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" class="t-bg"/><circle cx="22" cy="22" r="19" class="t-fg" id="tfg"/></svg><b id="tnum">${SECS}</b></div></div>
+    <div class="mail-body"><h3></h3><p class="m-lead"></p><div class="mail-rows"></div>
+    <div class="pickup"><b>Pickup address</b><p class="m-addr"></p><a target="_blank" rel="noopener" class="m-map">Open in Google Maps</a><p class="m-note"></p></div>
+    <div class="mail-foot"><span id="tleft">Closes in ${SECS} seconds</span><button type="button" id="rclose">Close</button></div></div></div>`;
+  const q=s=>ov.querySelector(s);
+  q('.m-to').textContent='To: '+(o.to_email||'you');q('.m-sub').textContent=(paid?'Your Laser Lab order ':'Preview order ')+'#'+o.order_id;
+  q('h3').textContent=paid?`Thanks, ${o.customer_name.split(' ')[0]||'friend'}! Your order is paid.`:'This is what your receipt will look like';
+  q('.m-lead').textContent=paid?'Here are your order details. A copy is also in your email.':'Nothing was charged. On the real site this shows after you pay.';
+  const rows=[['Order number','#'+o.order_id],['Print',o.item],['Color',o.color],['Size',o.size],['Name engraved',o.engraving],['Total',o.total],['Status',o.status]];
+  rows.forEach(([a,b])=>{const r=document.createElement('div');r.className='row';const x=document.createElement('span'),y=document.createElement('b');x.textContent=a;y.textContent=b;r.append(x,y);q('.mail-rows').appendChild(r)});
+  q('.m-addr').textContent=o.pickup_address;q('.m-map').href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.pickup_address);q('.m-note').textContent=o.pickup_note;
+  document.body.appendChild(ov);const C=2*Math.PI*19,fg=q('#tfg');fg.style.strokeDasharray=C;
+  const t0=performance.now();let done=false;
+  const close=()=>{if(done)return;done=true;clearInterval(iv);ov.classList.add('out');setTimeout(()=>ov.remove(),300);$('#sent').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})};
+  const iv=setInterval(()=>{const left=Math.max(0,SECS-(performance.now()-t0)/1000);fg.style.strokeDashoffset=C*(1-left/SECS);
+    const n=Math.ceil(left);q('#tnum').textContent=n;q('#tleft').textContent='Closes in '+n+' second'+(n===1?'':'s');if(left<=0)close()},100);
+  q('#rclose').onclick=close;ov.addEventListener('keydown',e=>{if(e.key==='Escape')close()});q('#rclose').focus();
+}
+async function orderDone(id,paid){
+  const o=orderInfo(id,paid),nm=o.customer_name;$('#form').hidden=true;const ok=$('#sent');ok.hidden=false;
+  ok.textContent=paid?`Thanks, ${nm}! Your order #${id} is paid. We'll email you to set up a pickup time.`:`Thanks, ${nm}! This was a preview, so nothing was charged.`;
+  showReceipt(o,paid);
+  $('#rv-name').value=nm.split(' ')[0]||'';$('#review').hidden=false;
+  if(paid){const st=await sendReceipt(o);
+    ok.textContent+=st==='sent'?` Your receipt and the pickup address were emailed to ${o.to_email}.`:st==='failed'?` We couldn't email your receipt, so save your order number: #${id}.`:' PayPal also emailed you a payment receipt.'}
+}
 $('#form').addEventListener('submit',e=>{e.preventDefault();if(!state.cart.length){toast('Pick a print first');return}
-  orderDone($('#f-name').value,'This is a preview, so nothing was sent or charged. On the real site you pay with PayPal or a card here.')});
+  orderDone('PREVIEW-'+Math.floor(1000+Math.random()*9000),false)});
 
 /* Reviews */
 let stars=0,db=null,myId=null,reviews=[],local=[];
