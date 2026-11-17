@@ -402,11 +402,8 @@ button{font:inherit;color:inherit;cursor:pointer}
       </section>
       <section class="view" id="v-design" hidden>
         <div><div class="kick">Make it yours</div><h2 id="d-name">Bolt Keychain</h2></div>
-        <p class="sub">Drag the print to turn it. Pick a color and a size.</p>
+        <p class="sub">Drag the print to turn it. Pick a color.</p>
         <div><div class="group-h"><b>Color</b><span id="d-color">Laser Orange</span></div><div class="swatches" id="swatches" role="group" aria-label="Color"></div></div>
-        <div class="sizer"><div class="group-h"><b>Size</b><span><b class="mono" id="d-dims">5.5 cm tall</b> · <span id="d-sizename">Medium</span></span></div>
-          <input type="range" id="size" min="0.8" max="1.3" step="0.05" value="1" aria-label="Size">
-          <div class="ends"><span id="d-min">4.4 cm</span><span id="d-max">7.2 cm</span></div></div>
         <div class="buy"><div class="price"><span id="price">$5</span><small>Sample price</small></div><button class="cta" id="add">Order this</button></div>
         <button class="cta ghost" id="back">Back to all prints</button>
       </section>
@@ -479,12 +476,12 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const PRODUCTS=[
  {id:'bolt',name:'Bolt Keychain',price:5,color:'#FF7A1F',layers:40,time:'20 min',h:5.5,fact:'Keychains print flat on the bed so they come out strong.'},
  {id:'cup',name:'Hex Pencil Cup',price:10,color:'#E8321E',layers:180,time:'2 h 10 min',h:9,fact:'The walls are printed with lines only 0.4 mm wide.'},
- {id:'rocket',name:'Desk Rocket',price:12,color:'#F4F1EC',layers:230,time:'2 h 45 min',h:11,fact:'The fins are printed at an angle, so no supports are needed.'},
- {id:'vase',name:'Twist Vase',price:15,color:'#FFB21F',layers:260,time:'3 h 30 min',h:12,fact:'Vases print in one long spiral line with no stops.'}
+ {id:'rocket',name:'Desk Rocket',price:12,color:'#2F6BFF',layers:230,time:'2 h 45 min',h:11,fact:'The fins are printed at an angle, so no supports are needed.'},
+ {id:'vase',name:'Twist Vase',price:15,color:'#FF7A1F',layers:260,time:'3 h 30 min',h:12,fact:'Vases print in one long spiral line with no stops.'}
 ];
-const COLORS=[['Laser Orange','#FF7A1F'],['Lightning Red','#E8321E'],['Spark Yellow','#FFB21F'],['Snow White','#F4F1EC'],['Charcoal','#3A3A44'],['Electric Blue','#2F6BFF'],['Mint','#3DDC97'],['Hot Pink','#FF3D8B']];
+const COLORS=[['Lightning Red','#E8321E'],['Laser Orange','#FF7A1F'],['Electric Blue','#2F6BFF']];
 const MATS=[{id:'pla',n:'PLA',add:0}];
-function curSize(){const m=state.scale;return {m,pm:.8+(m-.8)*1.4,n:m<.95?'Small':m<1.15?'Medium':'Large'}}
+function curSize(){return {m:1,pm:1,n:'Standard'}}
 const state={sel:0,picked:-1,color:'',mat:'pla',scale:1,cart:[],answers:{},qStep:0,printDone:false};
 const colorName=h=>(COLORS.find(c=>c[1]===h)||['Custom'])[0];
 const esc=s=>String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
@@ -889,7 +886,7 @@ addEventListener('hashchange',()=>show(location.hash.slice(1)));
 function nav(v){if(location.hash==='#'+v)show(v);else location.hash=v}
 
 function pickProduct(i){
-  state.picked=i;state.color=PRODUCTS[i].color;state.mat='pla';state.scale=1;$('#size').value=1;state.answers={};state.qStep=0;scaleNow=1;
+  state.picked=i;state.color=PRODUCTS[i].color;state.mat='pla';state.scale=1;state.answers={};state.qStep=0;scaleNow=1;
   placeProduct();renderQ();renderFacts();renderDesign();$('#p-name').textContent=PRODUCTS[i].name;$('#r-name').textContent=PRODUCTS[i].name;
   nav('print');startPrint();
 }
@@ -906,13 +903,9 @@ if(!hasGL){$('#tapcue').innerHTML='<button class="cta" style="pointer-events:aut
 /* Design UI */
 COLORS.forEach(([n,h])=>{const b=document.createElement('button');b.className='sw';b.style.background=h;b.title=n;b.setAttribute('aria-label',n);b.dataset.h=h;
   b.onclick=()=>{state.color=h;applyMaterial();renderDesign()};$('#swatches').appendChild(b)});
-$('#size').addEventListener('input',e=>{state.scale=+e.target.value;renderDesign();renderFacts()});
-$('#size').addEventListener('change',()=>{if(hasGL&&!printing&&!userTouched){const c=viewCam();flyTo(c[0],c[1],700)}});
 function renderDesign(){if(state.picked<0)return;const p=PRODUCTS[state.picked],z=curSize(),cm=v=>v.toFixed(1).replace('.0','');
   $$('#swatches .sw').forEach(b=>b.setAttribute('aria-pressed',b.dataset.h===state.color));
-  const sl=$('#size');sl.style.setProperty('--fill',((state.scale-.8)/.5*100)+'%');
   $('#d-name').textContent=p.name;$('#d-color').textContent=colorName(state.color);
-  $('#d-dims').textContent=cm(p.h*z.m)+' cm tall';$('#d-sizename').textContent=z.n;$('#d-min').textContent=cm(p.h*.8)+' cm';$('#d-max').textContent=cm(p.h*1.3)+' cm';
   countPrice(priceOf());$('#add').textContent='Order this · $'+priceOf()}
 let shownPrice=0;function countPrice(to){const el=$('#price');if(reduce||!shownPrice||shownPrice===to){el.textContent='$'+to;shownPrice=to;return}
   const from=shownPrice,t0=performance.now();shownPrice=to;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
@@ -921,7 +914,7 @@ $('#to-design').onclick=()=>{if(printing)finishPrint();nav('design')};
 $('#back').onclick=()=>{go(state.sel+relOf(state.picked));nav('shop')};
 $('#more').onclick=()=>nav('shop');
 $('#add').onclick=()=>{const p=PRODUCTS[state.picked],a=state.answers,z=curSize();
-  state.cart=[{name:p.name,color:colorName(state.color),size:(p.h*z.m).toFixed(1).replace('.0','')+' cm tall ('+z.n+')',forWho:a.for||'',engr:a.name||'',price:priceOf()}];
+  state.cart=[{name:p.name,color:colorName(state.color),size:(p.h*z.m).toFixed(1).replace('.0','')+' cm tall',forWho:a.for||'',engr:a.name||'',price:priceOf()}];
   $('#form').hidden=false;$('#sent').hidden=true;renderCart();nav('order')};
 
 /* Order */
