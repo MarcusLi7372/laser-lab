@@ -327,7 +327,22 @@ button{font:inherit;color:inherit;cursor:pointer}
   .gcode{display:none}
   .shopui{gap:9px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* step change: a lightning-edged black panel with the logo strikes across */
+.zw{position:fixed;top:0;bottom:0;left:-15vw;width:130vw;z-index:80;pointer-events:none;transform:translateX(-120%);background:linear-gradient(180deg,#FF7A1F,#E8321E 60%,#FFB21F);clip-path:polygon(0 0,93% 0,100% 7%,91% 17%,99% 29%,89% 41%,100% 54%,90% 66%,98% 78%,88% 89%,95% 100%,7% 100%,0 93%,9% 83%,1% 71%,11% 59%,0 46%,10% 34%,2% 22%,12% 11%,5% 0);filter:drop-shadow(0 0 24px rgba(255,90,30,.7))}
+.zw i{position:absolute;inset:0 7px;background:radial-gradient(60% 50% at 50% 50%,#2a0f08,#09090B 70%);clip-path:polygon(0 0,93% 0,100% 7%,91% 17%,99% 29%,89% 41%,100% 54%,90% 66%,98% 78%,88% 89%,95% 100%,7% 100%,0 93%,9% 83%,1% 71%,11% 59%,0 46%,10% 34%,2% 22%,12% 11%,5% 0);display:grid;place-items:center}
+.zw img{width:min(220px,46vw);height:auto;filter:drop-shadow(0 0 18px rgba(255,90,30,.8))}
+.zw.go{animation:zw .66s cubic-bezier(.75,0,.25,1) both}
+.zw.go img{animation:zwl .66s steps(1) both,zws .66s cubic-bezier(.75,0,.25,1) both}
+@keyframes zw{0%{transform:translateX(-120%)}42%,58%{transform:translateX(0)}100%{transform:translateX(120%)}}
+@keyframes zwl{0%,30%{opacity:0}34%{opacity:1}38%{opacity:.3}42%,100%{opacity:1}}
+@keyframes zws{0%{transform:scale(.6)}50%{transform:scale(1)}100%{transform:scale(1.3)}}
+.rise{animation:rise2 .55s cubic-bezier(.2,.9,.2,1.15) both}
+@keyframes rise2{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+.cta:not(.ghost){transition:transform .2s cubic-bezier(.2,.9,.2,1.3),box-shadow .2s}
+.cta:not(.ghost):hover{box-shadow:0 0 24px rgba(255,90,30,.5)}
+.price.pop{animation:ppop .4s cubic-bezier(.2,.9,.2,1.5)}
+@keyframes ppop{40%{transform:scale(1.18);text-shadow:0 0 18px rgba(255,122,31,.8)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.zw{display:none}}
 </style>
 </head>
 <body>
@@ -450,6 +465,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="enter"><span class="ping"></span>Tap anywhere to enter</div>
   </div>
 </div>
+<div class="zw" id="zw" aria-hidden="true"><i><img alt=""></i></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -474,6 +490,11 @@ const colorName=h=>(COLORS.find(c=>c[1]===h)||['Custom'])[0];
 const esc=s=>String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const priceOf=()=>{const p=PRODUCTS[state.picked];return Math.round(p.price*curSize().pm)};
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* magnetic buttons (desktop) */
+if(!reduce&&matchMedia('(hover:hover) and (pointer:fine)').matches)document.addEventListener('pointermove',e=>{const b=e.target.closest&&e.target.closest('.cta:not(.ghost):not(:disabled)');
+  $$('.cta.mag').forEach(x=>{if(x!==b){x.classList.remove('mag');x.style.transform=''}});if(!b)return;const r=b.getBoundingClientRect();
+  b.classList.add('mag');b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.08}px,${(e.clientY-r.top-r.height/2)*.25}px)`});
 
 /* Splash */
 (function splash(){
@@ -829,7 +850,14 @@ function renderFacts(){const p=PRODUCTS[state.picked],s=curSize();
   $('#tip').innerHTML=`<b>Did you know?</b> ${p.fact}`}
 
 /* Views */
+let zwT=0,firstShow=true;
 function show(v){
+  const prev=view;
+  if(firstShow||reduce||!prev||prev===v){firstShow=false;realShow(v);return}
+  const w=$('#zw');if(!w.querySelector('img').src)w.querySelector('img').src=$('#slogo').src;
+  w.classList.remove('go');void w.offsetWidth;w.classList.add('go');clearTimeout(zwT);zwT=setTimeout(()=>realShow(v),270)}
+function staggerIn(el){if(!el||reduce)return;[...el.children].forEach((c,i)=>{c.classList.remove('rise');void c.offsetWidth;c.style.animationDelay=(.06+i*.07)+'s';c.classList.add('rise')})}
+function realShow(v){
   if((v==='print'||v==='design')&&state.picked<0)v='shop';
   if(v==='order'&&!state.cart.length)v=state.picked>=0?'design':'shop';
   if(v==='design'&&engr&&!engr.done){v='print';toast('Wait for the laser to finish, or tap Skip')}
@@ -848,6 +876,7 @@ function show(v){
     if(carouselMode){requestAnimationFrame(()=>{const c=shopCam();flyTo(c[0],c[1])});lightLevel=1}
     else{lightLevel=state.mat==='glow'?.28:1;if(!printing&&!userTouched){const c=viewCam();flyTo(c[0],c[1])}}
   }
+  staggerIn($('#v-'+v));if(v==='shop')staggerIn($('#shopui'));
   $('#side').scrollTop=0;setSheet(v==='order'?'big':(v==='print'&&(printing||(engr&&!engr.done)))?'peek':'mid');
 }
 var sheetMode='mid';function setSheet(m){sheetMode=m;const mn=$('#main');mn.classList.toggle('big',m==='big');mn.classList.toggle('peek',m==='peek');if(hasGL)applyOffset()}
@@ -884,7 +913,10 @@ function renderDesign(){if(state.picked<0)return;const p=PRODUCTS[state.picked],
   const sl=$('#size');sl.style.setProperty('--fill',((state.scale-.8)/.5*100)+'%');
   $('#d-name').textContent=p.name;$('#d-color').textContent=colorName(state.color);
   $('#d-dims').textContent=cm(p.h*z.m)+' cm tall';$('#d-sizename').textContent=z.n;$('#d-min').textContent=cm(p.h*.8)+' cm';$('#d-max').textContent=cm(p.h*1.3)+' cm';
-  $('#price').textContent='$'+priceOf();$('#add').textContent='Order this · $'+priceOf()}
+  countPrice(priceOf());$('#add').textContent='Order this · $'+priceOf()}
+let shownPrice=0;function countPrice(to){const el=$('#price');if(reduce||!shownPrice||shownPrice===to){el.textContent='$'+to;shownPrice=to;return}
+  const from=shownPrice,t0=performance.now();shownPrice=to;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
+  (function f(n){const k=Math.min(1,(n-t0)/420);el.textContent='$'+Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1&&shownPrice===to)requestAnimationFrame(f)})(t0)}
 $('#to-design').onclick=()=>{if(printing)finishPrint();nav('design')};
 $('#back').onclick=()=>{go(state.sel+relOf(state.picked));nav('shop')};
 $('#more').onclick=()=>nav('shop');
