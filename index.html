@@ -327,6 +327,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   .gcode{display:none}
   .shopui{gap:9px}
 }
+.shopall{margin-left:auto;justify-self:end;flex-shrink:0;text-decoration:none;font-weight:800;font-size:13px;padding:9px 14px;border-radius:999px;background:var(--hot);color:#fff;white-space:nowrap;transition:transform .2s,box-shadow .2s}
+.shopall:hover{transform:translateY(-2px);box-shadow:0 0 22px rgba(255,90,30,.5)}
 /* step change: a lightning-edged black panel with the logo strikes across */
 .zw{position:fixed;top:0;bottom:0;left:-15vw;width:130vw;z-index:80;pointer-events:none;transform:translateX(-120%);background:linear-gradient(180deg,#FF7A1F,#E8321E 60%,#FFB21F);clip-path:polygon(0 0,93% 0,100% 7%,91% 17%,99% 29%,89% 41%,100% 54%,90% 66%,98% 78%,88% 89%,95% 100%,7% 100%,0 93%,9% 83%,1% 71%,11% 59%,0 46%,10% 34%,2% 22%,12% 11%,5% 0);filter:drop-shadow(0 0 24px rgba(255,90,30,.7))}
 .zw i{position:absolute;inset:0 7px;background:radial-gradient(60% 50% at 50% 50%,#2a0f08,#09090B 70%);clip-path:polygon(0 0,93% 0,100% 7%,91% 17%,99% 29%,89% 41%,100% 54%,90% 66%,98% 78%,88% 89%,95% 100%,7% 100%,0 93%,9% 83%,1% 71%,11% 59%,0 46%,10% 34%,2% 22%,12% 11%,5% 0);display:grid;place-items:center}
@@ -356,7 +358,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       <a href="#design" data-v="design" class="off"><span class="n">3</span>Design</a><i class="link" aria-hidden="true"></i>
       <a href="#order" data-v="order" class="off"><span class="n">4</span>Order</a>
     </nav>
-    <span class="bar-end" aria-hidden="true"></span>
+    <a class="shopall" href="shop/">Shop all prints</a>
   </header>
 
   <main class="main" id="main" data-view="shop">
