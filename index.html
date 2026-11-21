@@ -99,9 +99,64 @@ header{position:sticky;top:0;z-index:20;background:rgba(9,9,11,.92);border-botto
   .go3d{padding:9px 12px;font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{--font-display:Unbounded,'Arial Black',sans-serif;--font-mono:ui-monospace,Menlo,monospace}
+.splash{position:fixed;inset:0;z-index:50;background:radial-gradient(70% 60% at 50% 42%,#1d0a05,#000 72%);display:grid;place-items:center;padding:24px;cursor:pointer;overflow:hidden;transition:opacity .7s .25s}
+.splash canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.bedgrid{position:absolute;left:-60%;right:-60%;bottom:-8%;height:52%;background-image:linear-gradient(rgba(255,122,31,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(255,122,31,.2) 1px,transparent 1px);background-size:56px 56px;transform:perspective(520px) rotateX(64deg);transform-origin:50% 100%;-webkit-mask-image:linear-gradient(to top,#000 5%,transparent 80%);mask-image:linear-gradient(to top,#000 5%,transparent 80%);animation:gridmove 2.4s linear infinite;pointer-events:none}
+@keyframes gridmove{to{background-position:0 56px}}
+.splash-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center}
+.printlogo{position:relative;width:min(80vw,480px);aspect-ratio:640/549;transition:transform .85s cubic-bezier(.6,0,.2,1),filter .85s,opacity .6s}
+.printlogo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.printlogo .ghost{opacity:.08;filter:grayscale(1) brightness(1.8)}
+.reveal{position:absolute;inset:0;clip-path:inset(100% 0 0 0)}
+#slogo{filter:drop-shadow(0 0 22px rgba(255,90,30,.35))}
+.splash.done #slogo{animation:charged 1.3s ease-out}
+@keyframes charged{0%{filter:brightness(3.2) drop-shadow(0 0 50px #ff7a1f)}20%{filter:brightness(.7) drop-shadow(0 0 10px #ff7a1f)}35%{filter:brightness(2) drop-shadow(0 0 40px #ff7a1f)}100%{filter:brightness(1) drop-shadow(0 0 22px rgba(255,90,30,.35))}}
+.scan{position:absolute;left:-5%;right:-5%;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#FF7A1F 15%,#FFF5EC 50%,#FF7A1F 85%,transparent);box-shadow:0 0 18px 3px rgba(255,122,31,.65);opacity:0;transition:opacity .3s}
+.splash.printing .scan{opacity:1}
+.nozzle{position:absolute;bottom:2px;left:50%;width:22px;height:30px;transform:translateX(-50%)}
+.nozzle::before{content:"";position:absolute;inset:0 0 6px;background:linear-gradient(#4a4a55,#202026);border-radius:4px 4px 2px 2px;box-shadow:inset 0 3px 0 #E8321E}
+.nozzle::after{content:"";position:absolute;left:50%;bottom:0;width:8px;height:8px;transform:translateX(-50%);background:#d6a73a;clip-path:polygon(0 0,100% 0,60% 100%,40% 100%);filter:drop-shadow(0 2px 6px #ff7a1f)}
+.status{width:min(80vw,360px);font-family:var(--font-mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;display:grid;gap:8px;transition:opacity .4s}
+.srow{display:flex;justify-content:space-between;gap:12px;color:var(--ink)}
+.srow b{font-weight:600;color:var(--orange);font-variant-numeric:tabular-nums}
+.srow.dim{color:var(--muted);letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.meter{height:3px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--hot);box-shadow:0 0 10px var(--orange)}
+.tagline{font-family:var(--font-display);font-weight:800;font-size:clamp(13px,2vw,17px);letter-spacing:.35em;text-transform:uppercase;display:flex;flex-wrap:wrap;justify-content:center;min-height:1.4em}
+.tagline span{opacity:0;transform:translateY(10px);display:inline-block}
+.splash.done .tagline span{animation:letter .5s cubic-bezier(.2,.9,.2,1.3) forwards}
+@keyframes letter{to{opacity:1;transform:none}}
+.enter{font-family:var(--font-mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);opacity:0;transition:opacity .4s;display:flex;align-items:center;gap:10px}
+.splash.ready .enter{opacity:1;animation:cue 1.6s ease-in-out infinite}
+.splash.out{opacity:0;pointer-events:none}
+.splash.out .printlogo{transform:scale(1.9);filter:blur(12px) brightness(2.2);opacity:0}
+.splash.out .status,.splash.out .tagline,.splash.out .enter,.splash.out .bedgrid{opacity:0;transition:opacity .3s}
+
+@keyframes gridmove{to{background-position:0 56px}}
+@keyframes cue{0%,100%{opacity:.95}50%{opacity:.6}}
 </style>
 </head>
 <body>
+<div class="splash" id="splash" role="button" tabindex="0" aria-label="Enter Laser Lab">
+  <div class="bedgrid"></div>
+  <canvas id="zap"></canvas>
+  <div class="splash-in">
+    <div class="printlogo">
+      <img class="ghost" id="ghost" alt="">
+      <div class="reveal" id="reveal"><img src="assets/logo.webp" alt="Laser Lab" id="slogo"></div>
+      <div class="scan" id="scan"><span class="nozzle" id="noz"></span></div>
+    </div>
+    <div class="status" id="sstatus">
+      <div class="srow"><span id="sstate">Heating nozzle</span><b id="spct">0%</b></div>
+      <div class="meter"><i id="tbar"></i></div>
+      <div class="srow dim"><span id="slayer">Layer 0 / 240</span><span id="stemp">25°C</span></div>
+    </div>
+    <div class="tagline" id="tagline"></div>
+    <div class="enter"><span class="ping"></span>Tap anywhere to enter</div>
+  </div>
+</div>
+
 <header><div class="wrap">
   <div class="top">
     <a class="brand" href="./" aria-label="Laser Lab shop"><img src="assets/logo.webp" alt=""><b>LASER <i>LAB</i></b></a>
@@ -217,6 +272,47 @@ function done(paid){
   openSheet(`<div class="det"><h2>${paid?'Paid! Thank you':'Order saved'}</h2><p>${items}</p><div class="tot"><span>Total</span><span>$${t} CAD</span></div>
   <p>Pick up at <b>${PICKUP}</b>. We'll email you to set a time.</p><button class="btn" onclick="document.getElementById('sheet').click()">Keep shopping</button></div>`,'cart');
 }
+const $$=s=>[...document.querySelectorAll(s)];const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* Splash */
+(function splash(){
+  const sp=$('#splash'),cv=$('#zap'),g=cv.getContext('2d'),src=$('#slogo').src;
+  $('#ghost').src=src;
+  let W,H,dpr,run=true,bolts=[],embers=[],flashA=0;
+  const tag='3D prints · made to order';$('#tagline').innerHTML=[...tag].map((c,i)=>`<span style="animation-delay:${.15+i*.025}s">${c===' '?'&nbsp;':c}</span>`).join('');
+  function size(){dpr=Math.min(devicePixelRatio,2);W=cv.width=innerWidth*dpr;H=cv.height=innerHeight*dpr}size();addEventListener('resize',size);
+  function bolt(x0,y0,x1,y1,width,depth){const pts=[[x0,y0]];const n=16;for(let i=1;i<n;i++){const t=i/n;pts.push([x0+(x1-x0)*t+(Math.random()-.5)*Math.min(W,H)*.09*(1-t*.5),y0+(y1-y0)*t])}pts.push([x1,y1]);
+    bolts.push({pts,width,life:1,col:Math.random()<.5?'232,50,30':'255,122,31'});
+    if(depth<1)for(let k=0;k<2;k++){const p=pts[3+Math.floor(Math.random()*(n-6))];bolt(p[0],p[1],p[0]+(Math.random()-.5)*W*.25,p[1]+H*(.1+Math.random()*.2),width*.45,depth+1)}}
+  function logoCenter(){const r=$('.printlogo').getBoundingClientRect();return [(r.left+r.width/2)*dpr,(r.top+r.height/2)*dpr]}
+  function strike(){const [cx,cy]=logoCenter();for(const side of [-1,1]){const x=cx+side*W*(.15+Math.random()*.2);bolt(x,-10,cx+side*W*.04,cy,4.5*dpr,0)}flashA=.3;
+    for(let i=0;i<40;i++)embers.push({x:cx+(Math.random()-.5)*W*.2,y:cy+(Math.random()-.5)*H*.1,vx:(Math.random()-.5)*4*dpr,vy:-(Math.random()*4)*dpr,l:1,s:2.4})}
+  function draw(){if(!run)return;g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);
+    if(flashA>.01){g.fillStyle=`rgba(255,190,150,${flashA})`;g.fillRect(0,0,W,H);flashA*=.8}
+    g.globalCompositeOperation='lighter';
+    bolts.forEach(b=>{for(const [lw,a,c] of [[b.width*4,.16,b.col],[b.width*1.6,.6,b.col],[b.width*.55,1,'255,245,236']]){g.strokeStyle=`rgba(${c},${a*b.life})`;g.lineWidth=lw;g.lineJoin='round';g.beginPath();b.pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}b.life-=.07});
+    bolts=bolts.filter(b=>b.life>0);
+    if(Math.random()<.35)embers.push({x:Math.random()*W,y:H+5,vx:(Math.random()-.5)*.4*dpr,vy:-(.6+Math.random()*1.4)*dpr,l:1,s:1.6});
+    embers.forEach(e=>{e.x+=e.vx;e.y+=e.vy;e.vy+=.03*dpr*(e.s>2?1:-.2);e.l-=e.s>2?.02:.004;g.fillStyle=`rgba(255,${130+Math.random()*90|0},50,${Math.max(0,e.l)})`;g.fillRect(e.x,e.y,e.s*dpr,e.s*dpr)});
+    embers=embers.filter(e=>e.l>0&&e.y>-10);
+    requestAnimationFrame(draw)}
+  if(!reduce)draw();
+  const HEAT=reduce?1:600,PRINT=reduce?1:2100,t0=performance.now();let done=false;
+  sp.classList.add('printing');
+  (function step(){if(!run)return;const t=performance.now()-t0;
+    if(t<HEAT){const k=t/HEAT;$('#stemp').textContent=Math.round(25+185*k)+'°C';$('#sstate').textContent='Heating nozzle';requestAnimationFrame(step);return}
+    const k=Math.min(1,(t-HEAT)/PRINT);
+    $('#reveal').style.clipPath=`inset(${(1-k)*100}% 0 0 0)`;$('#scan').style.bottom=k*100+'%';
+    $('#noz').style.left=(50+44*Math.sin(t*.018)*Math.cos(t*.0041))+'%';
+    $('#tbar').style.width=k*100+'%';$('#spct').textContent=Math.round(k*100)+'%';
+    $('#slayer').textContent='Layer '+Math.round(k*240)+' / 240';$('#stemp').textContent=(209+Math.round(Math.random()*2))+'°C';$('#sstate').textContent='Printing logo';
+    if(!reduce&&Math.random()<.5){const r=$('#noz').getBoundingClientRect();embers.push({x:(r.left+r.width/2)*dpr,y:r.bottom*dpr,vx:(Math.random()-.5)*3*dpr,vy:-(Math.random()*2)*dpr,l:1,s:2.2})}
+    if(k<1){requestAnimationFrame(step);return}
+    if(done)return;done=true;sp.classList.remove('printing');sp.classList.add('done');$('#sstate').textContent='Print complete';$('#stemp').textContent='Ready';
+    if(!reduce)strike();setTimeout(()=>sp.classList.add('ready'),reduce?0:700)})();
+  function leave(){if(sp.classList.contains('out'))return;if(!reduce)strike();sp.classList.add('out');setTimeout(()=>{sp.hidden=true;run=false},1000)}
+  sp.addEventListener('click',leave);sp.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')leave()});
+  setTimeout(leave,reduce?900:HEAT+PRINT+1700);
+})();
 $('#cartBtn').onclick=openCart;
 save();render();
 if(location.hash==='#cart')openCart();
