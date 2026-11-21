@@ -135,6 +135,8 @@ header{position:sticky;top:0;z-index:20;background:rgba(9,9,11,.92);border-botto
 
 @keyframes gridmove{to{background-position:0 56px}}
 @keyframes cue{0%,100%{opacity:.95}50%{opacity:.6}}
+.stk{font-size:12px;font-weight:800;color:#5ee07a}.stk.out{color:#ff7b72}
+#wl input{margin-top:6px;width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--ink);font:inherit}
 </style>
 </head>
 <body>
@@ -196,7 +198,8 @@ const P=[
  {id:'ray',n:'Flexi Stingray',p:5,c:'flexi',imgs:1,d:'Bendy stingray with flapping wings and a wiggly tail.',k:'articulated manta'},
  {id:'bunny',n:'Flexi Bunny',p:5,c:'flexi',imgs:1,d:'Cute bendy bunny with moving joints.',k:'articulated rabbit'},
  {id:'otter',n:'Flexi Otter',p:6,c:'flexi',imgs:1,d:'Bendy otter that floats on its back, with a long jointed tail.',k:'articulated'},
- {id:'mini-dino',n:'Mini Dino',p:2,c:'flexi',imgs:3,d:'Tiny dinosaur with spikes down its back. Collect a whole herd.',k:'dinosaur small figure'}
+ {id:'mini-dino',n:'Mini Dino',p:2,c:'flexi',imgs:3,d:'Tiny dinosaur with spikes down its back. Collect a whole herd.',k:'dinosaur small figure'},
+ {id:'snake',n:'Flexi Snake',p:8,c:'flexi',imgs:2,d:'Long bendy snake wearing a little yellow hat. Curl it up or stretch it out.',k:'worm flexi hat articulated'}
 ];
 const CATS=[['all','All'],['desk','Desk'],['decor','Decor'],['fidget','Fidgets'],['flexi','Flexi animals']];
 const COLORS=[['Lightning Red','#E8321E'],['Laser Orange','#FF7A1F'],['Electric Blue','#2F6BFF']];
@@ -206,6 +209,13 @@ const PICKUP='23 Solar Street, Richmond Hill, ON';
 const $=s=>document.querySelector(s);
 const img=(p,i=1)=>`shop/img/${p.id}-${i}c.webp`;
 const HOUSE=p=>p.c==='desk'||p.c==='decor';
+/* How many of each print Liam has ready. Change a number here when stock changes; 0 shows "Sold out" and the waiting list.
+   PLACEHOLDER: every product is set to 3 until Liam sends his real counts. */
+const STOCK={organizer:3,'dino-holder':3,'pencil-cup':3,'gem-cup':3,'twist-vase':3,'wave-vase':3,reindeer:3,moose:3,ghost:3,pyramid:3,spiral:3,'slinky-cat':3,'flexi-cat':3,shark:3,ray:3,bunny:3,otter:3,'mini-dino':3,snake:3};
+const WAITLIST_EMAIL='marcus2020li10@gmail.com';
+const inCart=id=>cart.filter(x=>x.id===id).reduce((a,b)=>a+b.q,0);
+const left=p=>Math.max(0,(STOCK[p.id]??0)-inCart(p.id));
+const stockTag=p=>{const n=STOCK[p.id]??0;return n>0?`<span class="stk">${n} in stock</span>`:'<span class="stk out">Sold out</span>'};
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let cat='all',cart=[];
 try{cart=JSON.parse(localStorage.getItem('ll-cart')||'[]')}catch(e){}
@@ -217,7 +227,7 @@ CATS.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;
 function render(){
   const q=$('#q').value.trim().toLowerCase();
   const list=P.filter(p=>(cat==='all'||p.c===cat)&&(!q||(p.n+' '+p.d+' '+p.k+' '+p.c).toLowerCase().includes(q)));
-  $('#grid').innerHTML=list.map(p=>`<button class="card" data-id="${p.id}"><div class="ph"><img src="${img(p)}" alt="${esc(p.n)}" loading="lazy"></div><div class="info"><h3>${esc(p.n)}</h3><p>${esc(p.d)}</p><div class="pr"><b>$${p.p}</b><small>${p.imgs>1?p.imgs+' photos':''}</small></div></div></button>`).join('');
+  $('#grid').innerHTML=list.map(p=>`<button class="card" data-id="${p.id}"><div class="ph"><img src="${img(p)}" alt="${esc(p.n)}" loading="lazy"></div><div class="info"><h3>${esc(p.n)}</h3><p>${esc(p.d)}</p><div class="pr"><b>$${p.p}</b>${stockTag(p)}</div></div></button>`).join('');
   $('#count').textContent=list.length+' print'+(list.length===1?'':'s');$('#empty').hidden=!!list.length;
 }
 $('#q').addEventListener('input',render);
@@ -236,13 +246,19 @@ function openProduct(id){
   openSheet(`<div class="gal"><button class="x" aria-label="Close">✕</button><img class="main" src="${img(p)}" alt="${esc(p.n)}">${p.imgs>1?`<div class="thumbs">${th}</div>`:''}</div>
   <div class="det"><div><span class="tag">${{desk:'Desk',decor:'Decor',fidget:'Fidget',flexi:'Flexi animal'}[p.c]}</span><h2>${esc(p.n)}</h2></div><div class="price">$${p.p}</div><p>${esc(p.d)}</p>
   ${qs}<p class="note">You get it just like the photo.</p>
-  <div><div class="lbl">Quantity</div><div class="qty"><button data-d="-1" aria-label="Less">−</button><span id="qn">1</span><button data-d="1" aria-label="More">+</button></div></div>
-  <button class="btn" id="add">Add to cart · $${p.p}</button></div>`);
+  <div>${stockTag(p)}</div>
+  ${(STOCK[p.id]??0)>0?`<div><div class="lbl">Quantity</div><div class="qty"><button data-d="-1" aria-label="Less">−</button><span id="qn">1</span><button data-d="1" aria-label="More">+</button></div></div>
+  <button class="btn" id="add">Add to cart · $${p.p}</button>`:`<form class="qbox" id="wl"><h4 style="margin-top:0">Join the waiting list</h4><p class="note" style="margin:0 0 8px">We'll email you when it's back in stock.</p>
+  <input id="wlName" placeholder="Your name" autocomplete="name" required><input id="wlEmail" type="email" placeholder="Your email" autocomplete="email" required><p class="err" id="wlErr"></p><button class="btn" type="submit" style="margin-top:6px">Notify me</button></form>`}</div>`);
   const s=$('#sheet'),main=s.querySelector('.main');
   s.querySelectorAll('.thumbs img').forEach(t=>t.onclick=()=>{main.src=t.src;s.querySelectorAll('.thumbs img').forEach(x=>x.setAttribute('aria-current',x===t))});
   if(house)s.querySelectorAll('#qWho button').forEach(b=>b.onclick=()=>{who=b.textContent;s.querySelectorAll('#qWho button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
-  s.querySelectorAll('.qty button').forEach(b=>b.onclick=()=>{q=Math.max(1,Math.min(20,q+ +b.dataset.d));$('#qn').textContent=q;$('#add').textContent='Add to cart · $'+p.p*q});
-  $('#add').onclick=()=>{const ex=cart.find(x=>x.id===p.id&&(x.who||'')===who);if(ex)ex.q+=q;else cart.push({id:p.id,q,who});save();close();toast('Added to cart')};
+  s.querySelectorAll('.qty button').forEach(b=>b.onclick=()=>{q=Math.max(1,Math.min(Math.max(1,left(p)),q+ +b.dataset.d));$('#qn').textContent=q;$('#add').textContent='Add to cart · $'+p.p*q});
+  const wl=$('#wl');if(wl)wl.onsubmit=async e=>{e.preventDefault();const n=$('#wlName').value.trim(),m=$('#wlEmail').value.trim();if(!n||!/^\S+@\S+\.\S+$/.test(m)){$('#wlErr').textContent='Add your name and a real email.';return}
+    const b=wl.querySelector('button');b.disabled=true;b.textContent='Sending...';
+    try{const r=await fetch('https://formsubmit.co/ajax/'+WAITLIST_EMAIL,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({_subject:'Laser Lab waiting list: '+p.n,Product:p.n,Name:n,email:m,_template:'table',_captcha:'false'})});if(!r.ok)throw 0;
+      wl.innerHTML='<h4 style="margin:0">You\'re on the list!</h4><p class="note" style="margin:6px 0 0">We\'ll email '+esc(m)+' when '+esc(p.n)+' is back.</p>'}catch(err){$('#wlErr').textContent="Couldn't send. Try again in a moment.";b.disabled=false;b.textContent='Notify me'}};
+  const add=$('#add');if(add)add.onclick=()=>{if(left(p)<q){toast(left(p)?'Only '+left(p)+' more in stock':'You have all of them in your cart');return}const ex=cart.find(x=>x.id===p.id&&(x.who||'')===who);if(ex)ex.q+=q;else cart.push({id:p.id,q,who});save();close();toast('Added to cart')};
 }
 let ppLoad;
 function loadPP(){return ppLoad||(ppLoad=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://www.paypal.com/sdk/js?client-id='+encodeURIComponent(PAYPAL_CLIENT_ID)+'&currency=CAD&intent=capture&components=buttons&disable-funding=paylater,venmo';s.onload=()=>window.paypal&&window.paypal.Buttons?ok():no();s.onerror=no;document.head.appendChild(s)}))}
