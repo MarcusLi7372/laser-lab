@@ -211,6 +211,8 @@ const HOUSE=p=>p.c==='desk'||p.c==='decor';
    PLACEHOLDER: every product is set to 3 until Liam sends his real counts. */
 const STOCK={organizer:3,'dino-holder':3,'pencil-cup':3,'gem-cup':3,'twist-vase':3,'wave-vase':3,reindeer:3,moose:3,ghost:3,pyramid:3,spiral:3,'slinky-cat':3,'flexi-cat':3,shark:3,ray:3,bunny:3,otter:3,'mini-dino':3,snake:3};
 const WAITLIST_EMAIL='marcus2020li10@gmail.com',ORDER_EMAIL=WAITLIST_EMAIL;
+const PICKUP='23 Solar Street, Richmond Hill, ON',READY_HOURS=2;
+const readyAt=()=>new Date(Date.now()+READY_HOURS*36e5).toLocaleString('en-CA',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const inCart=id=>cart.filter(x=>x.id===id).reduce((a,b)=>a+b.q,0);
 const left=p=>Math.max(0,(STOCK[p.id]??0)-inCart(p.id));
 const stockTag=p=>{const n=STOCK[p.id]??0;return n>0?`<span class="stk">${n} in stock</span>`:'<span class="stk out">Sold out</span>'};
@@ -265,7 +267,7 @@ function openCart(){
   const rows=cart.map((it,i)=>{const p=P.find(x=>x.id===it.id);return `<div class="row"><img src="${img(p)}" alt=""><div><b>${esc(p.n)}</b><br><small>${it.who?'For: '+esc(it.who)+' · ':''}${it.q} × $${p.p}</small></div><span>$${p.p*it.q}</span><button data-rm="${i}">Remove</button></div>`}).join('');
   openSheet(`<div class="det"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Your cart</h2><button class="x" aria-label="Close" style="position:static;background:var(--card2)">✕</button></div>
   <div>${rows}</div><div class="tot"><span>Total</span><span>$${total()} CAD</span></div>
-  <div class="qbox" style="margin:4px 0"><b>No payment online</b><p class="note" style="margin:4px 0 0">Send your order and we'll email you to confirm it and set up a pickup time in Richmond Hill. You pay when you pick it up.</p></div>
+  <div class="qbox" style="margin:4px 0"><b>No payment online</b><p class="note" style="margin:4px 0 0">Send your order and it'll be ready for pickup in Richmond Hill in about 2 hours. You'll see the pickup address after you send it. You pay when you pick it up.</p></div>
   <label class="field"><b>Your name</b><input id="cName" autocomplete="name"></label>
   <label class="field"><b>Parent's email</b><input id="cEmail" type="email" autocomplete="email"></label>
   <label class="field"><b>Message (optional)</b><textarea id="cMsg" rows="2" maxlength="400" placeholder="Questions, colours, when you can pick up..."></textarea></label>
@@ -276,7 +278,8 @@ function openCart(){
   $('#cCopy').onclick=()=>{navigator.clipboard?.writeText(ORDER_EMAIL).then(()=>toast('Email copied'),()=>toast(ORDER_EMAIL))};
   $('#cSend').onclick=async()=>{if(!ok())return;const b=$('#cSend');b.disabled=true;b.textContent='Sending...';
     const lines=cart.map(it=>{const p=P.find(x=>x.id===it.id);return it.q+' x '+p.n+(it.who?' (for '+it.who+')':'')+' = $'+p.p*it.q}).join('\n');
-    const d={_subject:'Laser Lab order: '+$('#cName').value.trim()+' ($'+total()+')',Name:$('#cName').value.trim(),email:$('#cEmail').value.trim(),Order:lines,Total:'$'+total()+' CAD',Message:$('#cMsg').value.trim()||'-',_template:'table',_captcha:'false'};
+    const d={_subject:'Laser Lab order: '+$('#cName').value.trim()+' ($'+total()+')',Name:$('#cName').value.trim(),email:$('#cEmail').value.trim(),Order:lines,Total:'$'+total()+' CAD',Message:$('#cMsg').value.trim()||'-','Ready at':readyAt(),_template:'table',_captcha:'false'};
+    d._autoresponse='Hi '+d.Name+', thanks for your Laser Lab order!\n\n'+lines+'\nTotal: '+d.Total+'\n\nYour order will be ready for pickup in about '+READY_HOURS+' hours (around '+d['Ready at']+').\nPickup: '+PICKUP+'\nYou pay at pickup.\n\nReply to this email if you have any questions.\n- Laser Lab';
     try{const ac=new AbortController();setTimeout(()=>ac.abort(),12000);const r=await fetch('https://formsubmit.co/ajax/'+ORDER_EMAIL,{signal:ac.signal,method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(d)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false||j.success==='false')throw 0;done(true)}
     catch(e){location.href='mailto:'+ORDER_EMAIL+'?subject='+encodeURIComponent(d._subject)+'&body='+encodeURIComponent('Name: '+d.Name+'\nEmail: '+d.email+'\n\n'+lines+'\nTotal: '+d.Total+'\n\n'+(d.Message==='-'?'':d.Message));done(false)}};
 }
@@ -284,7 +287,7 @@ function done(paid){
   const items=cart.map(it=>{const p=P.find(x=>x.id===it.id);return `${it.q} × ${p.n}${it.who?' (for '+esc(it.who)+')':''}`}).join('<br>');const t=total();
   cart=[];save();
   openSheet(`<div class="det"><h2>${paid?'Order sent! Thank you':'Almost done'}</h2>${paid?'':'<p>Your email app opened with your order filled in. Press <b>Send</b> to finish.</p>'}<p>${items}</p><div class="tot"><span>Total</span><span>$${t} CAD</span></div>
-  <p>We'll email you to confirm your order and set up a pickup time in Richmond Hill. You pay at pickup.</p><button class="btn" onclick="document.getElementById('sheet').click()">Keep shopping</button></div>`,'cart');
+  <div class="qbox"><b>Ready in about ${READY_HOURS} hours</b><p style="margin:4px 0 0">Around <b>${readyAt()}</b></p><p style="margin:8px 0 0">Pick up at <b>${PICKUP}</b></p><p class="note" style="margin:6px 0 0">You pay at pickup.${paid?' We also emailed you these details.':''}</p></div><button class="btn" onclick="document.getElementById('sheet').click()">Keep shopping</button></div>`,'cart');
 }
 const $$=s=>[...document.querySelectorAll(s)];const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Splash */
