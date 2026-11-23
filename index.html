@@ -88,7 +88,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(9,9,11,.92);border-botto
 .row div{flex:1;min-width:0}.row small{color:var(--muted)}
 .row button{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline}
 .tot{display:flex;justify-content:space-between;font-weight:800;font-size:18px}
-.field{display:flex;flex-direction:column;gap:5px}.field input{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--ink);font:inherit}
+.field{display:flex;flex-direction:column;gap:5px}.cpy{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}.sel{user-select:all}.field textarea,.field input{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--ink);font:inherit}
 .err{color:#ff8a7a;font-size:14px;min-height:1em;margin:0}
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,120px);background:var(--ink);color:#111;font-weight:800;padding:12px 18px;border-radius:999px;z-index:60;transition:transform .3s}
 .toast.on{transform:translate(-50%,0)}
@@ -203,8 +203,6 @@ const P=[
 ];
 const CATS=[['all','All'],['desk','Desk'],['decor','Decor'],['fidget','Fidgets'],['flexi','Flexi animals']];
 const COLORS=[['Lightning Red','#E8321E'],['Laser Orange','#FF7A1F'],['Electric Blue','#2F6BFF']];
-const PAYPAL_CLIENT_ID='AcZbNJ_YQsMhEfDwivCnttojjcMxhWML8IiANCDVzcSHX0EMpK1GiO1dZ5OQuMUXQPilKRud5Km0CKMv';
-const PICKUP='23 Solar Street, Richmond Hill, ON';
 
 const $=s=>document.querySelector(s);
 const img=(p,i=1)=>`shop/img/${p.id}-${i}c.webp`;
@@ -212,7 +210,7 @@ const HOUSE=p=>p.c==='desk'||p.c==='decor';
 /* How many of each print Liam has ready. Change a number here when stock changes; 0 shows "Sold out" and the waiting list.
    PLACEHOLDER: every product is set to 3 until Liam sends his real counts. */
 const STOCK={organizer:3,'dino-holder':3,'pencil-cup':3,'gem-cup':3,'twist-vase':3,'wave-vase':3,reindeer:3,moose:3,ghost:3,pyramid:3,spiral:3,'slinky-cat':3,'flexi-cat':3,shark:3,ray:3,bunny:3,otter:3,'mini-dino':3,snake:3};
-const WAITLIST_EMAIL='marcus2020li10@gmail.com';
+const WAITLIST_EMAIL='marcus2020li10@gmail.com',ORDER_EMAIL=WAITLIST_EMAIL;
 const inCart=id=>cart.filter(x=>x.id===id).reduce((a,b)=>a+b.q,0);
 const left=p=>Math.max(0,(STOCK[p.id]??0)-inCart(p.id));
 const stockTag=p=>{const n=STOCK[p.id]??0;return n>0?`<span class="stk">${n} in stock</span>`:'<span class="stk out">Sold out</span>'};
@@ -260,8 +258,6 @@ function openProduct(id){
       wl.innerHTML='<h4 style="margin:0">You\'re on the list!</h4><p class="note" style="margin:6px 0 0">We\'ll email '+esc(m)+' when '+esc(p.n)+' is back.</p>'}catch(err){$('#wlErr').textContent="Couldn't send. Try again in a moment.";b.disabled=false;b.textContent='Notify me'}};
   const add=$('#add');if(add)add.onclick=()=>{if(left(p)<q){toast(left(p)?'Only '+left(p)+' more in stock':'You have all of them in your cart');return}const ex=cart.find(x=>x.id===p.id&&(x.who||'')===who);if(ex)ex.q+=q;else cart.push({id:p.id,q,who});save();close();toast('Added to cart')};
 }
-let ppLoad;
-function loadPP(){return ppLoad||(ppLoad=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://www.paypal.com/sdk/js?client-id='+encodeURIComponent(PAYPAL_CLIENT_ID)+'&currency=CAD&intent=capture&components=buttons&disable-funding=paylater,venmo';s.onload=()=>window.paypal&&window.paypal.Buttons?ok():no();s.onerror=no;document.head.appendChild(s)}))}
 const total=()=>cart.reduce((a,it)=>a+P.find(p=>p.id===it.id).p*it.q,0);
 
 function openCart(){
@@ -269,24 +265,26 @@ function openCart(){
   const rows=cart.map((it,i)=>{const p=P.find(x=>x.id===it.id);return `<div class="row"><img src="${img(p)}" alt=""><div><b>${esc(p.n)}</b><br><small>${it.who?'For: '+esc(it.who)+' · ':''}${it.q} × $${p.p}</small></div><span>$${p.p*it.q}</span><button data-rm="${i}">Remove</button></div>`}).join('');
   openSheet(`<div class="det"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Your cart</h2><button class="x" aria-label="Close" style="position:static;background:var(--card2)">✕</button></div>
   <div>${rows}</div><div class="tot"><span>Total</span><span>$${total()} CAD</span></div>
-  <p class="note">Free pickup at ${PICKUP}. We'll email you to set a pickup time.</p>
+  <div class="qbox" style="margin:4px 0"><b>No payment online</b><p class="note" style="margin:4px 0 0">Send your order and we'll email you to confirm it and set up a pickup time in Richmond Hill. You pay when you pick it up.</p></div>
   <label class="field"><b>Your name</b><input id="cName" autocomplete="name"></label>
-  <label class="field"><b>Email</b><input id="cEmail" type="email" autocomplete="email"></label>
-  <p class="err" id="cErr"></p><div id="pp"></div><p class="note" id="ppNote">Loading checkout...</p></div>`,'cart');
+  <label class="field"><b>Parent's email</b><input id="cEmail" type="email" autocomplete="email"></label>
+  <label class="field"><b>Message (optional)</b><textarea id="cMsg" rows="2" maxlength="400" placeholder="Questions, colours, when you can pick up..."></textarea></label>
+  <p class="err" id="cErr"></p><button class="btn" id="cSend">Send order request · $${total()}</button>
+  <p class="note" style="text-align:center">Or email us your order: <b class="sel">${ORDER_EMAIL}</b> <button class="cpy" id="cCopy" type="button">Copy</button></p></div>`,'cart');
   $('#sheet').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.rm,1);save();openCart()});
   const ok=()=>{const n=$('#cName').value.trim(),m=$('#cEmail').value.trim();const bad=!n?'Add your name.':!/^\S+@\S+\.\S+$/.test(m)?'Add a real email so we can set up pickup.':'';$('#cErr').textContent=bad;return !bad};
-  loadPP().then(()=>{$('#ppNote').textContent='Pay with PayPal or a card.';window.paypal.Buttons({style:{layout:'vertical',shape:'rect',color:'gold',label:'pay',height:48},
-    onClick:(d,a)=>ok()?a.resolve():a.reject(),
-    createOrder:(d,a)=>a.order.create({purchase_units:[{description:cart.map(it=>{const p=P.find(x=>x.id===it.id);return it.q+'x '+p.n+(it.who?' for '+it.who:'')}).join('; ').slice(0,127),amount:{currency_code:'CAD',value:total().toFixed(2)}}]}),
-    onApprove:(d,a)=>a.order.capture().then(()=>done(true)),
-    onError:()=>{$('#cErr').textContent="Payment didn't go through. Try again."}}).render('#pp')})
-  .catch(()=>{$('#ppNote').textContent='Checkout could not load here. Open the shop on its live link to pay.'});
+  $('#cCopy').onclick=()=>{navigator.clipboard?.writeText(ORDER_EMAIL).then(()=>toast('Email copied'),()=>toast(ORDER_EMAIL))};
+  $('#cSend').onclick=async()=>{if(!ok())return;const b=$('#cSend');b.disabled=true;b.textContent='Sending...';
+    const lines=cart.map(it=>{const p=P.find(x=>x.id===it.id);return it.q+' x '+p.n+(it.who?' (for '+it.who+')':'')+' = $'+p.p*it.q}).join('\n');
+    const d={_subject:'Laser Lab order: '+$('#cName').value.trim()+' ($'+total()+')',Name:$('#cName').value.trim(),email:$('#cEmail').value.trim(),Order:lines,Total:'$'+total()+' CAD',Message:$('#cMsg').value.trim()||'-',_template:'table',_captcha:'false'};
+    try{const ac=new AbortController();setTimeout(()=>ac.abort(),12000);const r=await fetch('https://formsubmit.co/ajax/'+ORDER_EMAIL,{signal:ac.signal,method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(d)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false||j.success==='false')throw 0;done(true)}
+    catch(e){location.href='mailto:'+ORDER_EMAIL+'?subject='+encodeURIComponent(d._subject)+'&body='+encodeURIComponent('Name: '+d.Name+'\nEmail: '+d.email+'\n\n'+lines+'\nTotal: '+d.Total+'\n\n'+(d.Message==='-'?'':d.Message));done(false)}};
 }
 function done(paid){
   const items=cart.map(it=>{const p=P.find(x=>x.id===it.id);return `${it.q} × ${p.n}${it.who?' (for '+esc(it.who)+')':''}`}).join('<br>');const t=total();
   cart=[];save();
-  openSheet(`<div class="det"><h2>${paid?'Paid! Thank you':'Order saved'}</h2><p>${items}</p><div class="tot"><span>Total</span><span>$${t} CAD</span></div>
-  <p>Pick up at <b>${PICKUP}</b>. We'll email you to set a time.</p><button class="btn" onclick="document.getElementById('sheet').click()">Keep shopping</button></div>`,'cart');
+  openSheet(`<div class="det"><h2>${paid?'Order sent! Thank you':'Almost done'}</h2>${paid?'':'<p>Your email app opened with your order filled in. Press <b>Send</b> to finish.</p>'}<p>${items}</p><div class="tot"><span>Total</span><span>$${t} CAD</span></div>
+  <p>We'll email you to confirm your order and set up a pickup time in Richmond Hill. You pay at pickup.</p><button class="btn" onclick="document.getElementById('sheet').click()">Keep shopping</button></div>`,'cart');
 }
 const $$=s=>[...document.querySelectorAll(s)];const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Splash */
